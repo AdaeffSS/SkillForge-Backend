@@ -16,17 +16,17 @@ export class Otp extends Model {
   @Column({
     type: DataType.STRING,
   })
-  phoneNumber: string;
+  declare phoneNumber: string;
 
   @Column({
     type: DataType.STRING,
     allowNull: false,
   })
-  code: string;
+  declare code: string;
 
   @Column({
     type: DataType.DATE,
     allowNull: false,
   })
-  expiresAt: Date;
+  declare expiresAt: Date;
 }

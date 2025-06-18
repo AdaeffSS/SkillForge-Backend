@@ -18,12 +18,12 @@ export class User extends Model<User> {
     allowNull: false,
     unique: true,
   })
-  phoneNumber: string;
+  declare phoneNumber: string;
 
   @Column({
     type: DataType.ENUM('user', 'admin'),
     allowNull: false,
     defaultValue: 'user',
   })
-  role: string;
+  declare role: string;
 }
