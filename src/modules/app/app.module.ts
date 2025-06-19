@@ -1,12 +1,17 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from "@nestjs/common";
 import { SequelizeModule } from '@nestjs/sequelize'
 import { ConfigModule } from '@nestjs/config'
 import { User } from "../users/entities/user.entity";
 import { Otp } from "../auth/entites/otp.entity";
 import { AuthModule } from "../auth/auth.module";
+import { Logger } from '../logger/logger.service'
+import * as process from "node:process";
+import { LoggerMiddleware } from "../logger/logger.middleware";
+import { LoggerModule } from "../logger/logger.module";
 
 @Module({
   imports: [
+    LoggerModule,
     AuthModule,
     ConfigModule.forRoot({
       envFilePath: '.env',
@@ -20,9 +25,20 @@ import { AuthModule } from "../auth/auth.module";
       database: process.env.DB_NAME,
       models: [User, Otp],
       autoLoadModels: true,
-      synchronize: true
+      synchronize: true,
+      logging: (msg: string) => {
+        const logger = new Logger();
+        logger.setContext('Sequelize');
+        logger.log(msg);
+      }
     }),
   ]
 })
 
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(LoggerMiddleware)
+      .forRoutes('{*path}')
+  }
+}

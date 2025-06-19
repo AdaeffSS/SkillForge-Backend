@@ -4,6 +4,7 @@ import { InjectModel } from "@nestjs/sequelize";
 import { Otp } from "./entites/otp.entity";
 import { JwtService } from "@nestjs/jwt";
 import * as process from "node:process";
+import { Response } from "express";
 
 @Injectable()
 export class AuthService {
@@ -41,29 +42,47 @@ export class AuthService {
     return { message: "Звонок отправлен. Введите 4 последние цифры номера" };
   }
 
-  async verifyCode(phoneNumber: string, code: string) {
+  async verifyCode(phoneNumber: string, code: string, res: Response) {
     if (!phoneNumber || !code) {
-      console.log(phoneNumber, code);
       throw new HttpException("Неверный запрос", 400);
     }
 
     const otp = await this.otpModel.findOne({
-      where: { phoneNumber, code },
+      where: { phoneNumber },
       order: [["createdAt", "DESC"]],
     });
 
     if (!otp) {
+      throw new HttpException("Код не запрашивался", HttpStatus.UNAUTHORIZED);
+    }
+
+    otp.attempts += 1;
+    await otp.save();
+
+    if (otp.code != code) {
+      throw new HttpException(`Код неверный. У тебя еще ${3-otp.attempts} попытки`, HttpStatus.UNAUTHORIZED);
+    } else if (otp.expiresAt < new Date()) {
+      throw new HttpException("Срок действия когда истек. Запроси код заново", HttpStatus.GONE);
+    } else if (otp.attempts > 3) {
       throw new HttpException(
-        "Неверный код подтверждения",
-        HttpStatus.UNAUTHORIZED,
+        "Превышено количество попыток ввода кода",
+        HttpStatus.TOO_MANY_REQUESTS,
       );
     }
 
-    if (otp.expiresAt < new Date()) {
-      throw new HttpException("Код подтверждения истек", HttpStatus.GONE);
-    }
     await otp.destroy();
 
-    return await this.generateTokens({ sub: phoneNumber });
+    const { accessToken, refreshToken } = await this.generateTokens({
+      sub: phoneNumber,
+    });
+
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      path: "/",
+    });
+    res.setHeader("Authorization", `Bearer ${accessToken}`);
   }
 }

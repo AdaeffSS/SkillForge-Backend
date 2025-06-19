@@ -29,4 +29,11 @@ export class Otp extends Model {
     allowNull: false,
   })
   declare expiresAt: Date;
+
+  @Column({
+    type: DataType.INTEGER,
+    defaultValue: 0,
+    allowNull: false,
+  })
+  declare attempts: number;
 }
