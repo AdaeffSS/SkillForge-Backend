@@ -1,11 +1,18 @@
-import { Table, Column, Model, PrimaryKey, DataType, Default, Unique } from 'sequelize-typescript';
+import {
+  Table,
+  Column,
+  Model,
+  PrimaryKey,
+  DataType,
+  Default,
+  Unique,
+} from "sequelize-typescript";
 
 @Table({
-  tableName: 'users',
+  tableName: "users",
   timestamps: true,
 })
-export class User extends Model<User> {
-
+export class User extends Model {
   @PrimaryKey
   @Column({
     type: DataType.UUID,
@@ -21,9 +28,15 @@ export class User extends Model<User> {
   declare phoneNumber: string;
 
   @Column({
-    type: DataType.ENUM('user', 'admin'),
+    type: DataType.ENUM("user", "admin"),
     allowNull: false,
-    defaultValue: 'user',
+    defaultValue: "user",
   })
   declare role: string;
+
+  @Column({
+    type: DataType.STRING,
+    allowNull: true,
+  })
+  declare username: string;
 }

@@ -6,15 +6,18 @@ import { SequelizeModule } from "@nestjs/sequelize";
 import { Otp } from "./entites/otp.entity";
 import { JwtModule } from "@nestjs/jwt";
 import { ConfigModule } from "@nestjs/config";
+import { TokensUtils } from "../../utils/tokens.util";
+import { UsersModule } from "../users/users.module";
 
 @Module({
   imports: [
     JwtModule.register({}),
+    UsersModule,
     ConfigModule,
     ZvonokModule,
     SequelizeModule.forFeature([Otp]),
   ],
   controllers: [AuthController],
-  providers: [AuthService],
+  providers: [AuthService, TokensUtils],
 })
 export class AuthModule {}

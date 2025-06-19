@@ -4,16 +4,10 @@ import {
   Injectable,
   UnauthorizedException,
 } from "@nestjs/common";
-import { JwtService } from "@nestjs/jwt";
-import { ConfigService } from "@nestjs/config";
-import { Request } from "express";
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
-  constructor(
-    private readonly jwtService: JwtService,
-    private readonly configService: ConfigService,
-  ) {}
+  constructor() {}
 
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest();
@@ -21,6 +15,6 @@ export class JwtAuthGuard implements CanActivate {
     if (!request.user) {
       throw new UnauthorizedException("Пользователь не авторизован");
     }
-    return true
+    return true;
   }
 }

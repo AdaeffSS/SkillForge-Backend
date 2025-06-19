@@ -2,32 +2,18 @@ import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
 import { ZvonokService } from "../zvonok/zvonok.service";
 import { InjectModel } from "@nestjs/sequelize";
 import { Otp } from "./entites/otp.entity";
-import { JwtService } from "@nestjs/jwt";
-import * as process from "node:process";
 import { Response } from "express";
+import { TokensUtils } from "../../utils/tokens.util";
+import { UsersService } from "../users/users.service";
 
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly zvonokService: ZvonokService,
     @InjectModel(Otp) private readonly otpModel: typeof Otp,
-    private readonly jwtService: JwtService,
+    private readonly zvonokService: ZvonokService,
+    private readonly tokensUtils: TokensUtils,
+    private readonly usersService: UsersService,
   ) {}
-
-  async generateTokens(payload: { sub: string }) {
-    const [accessToken, refreshToken] = await Promise.all([
-      this.jwtService.signAsync(payload, {
-        secret: process.env.JWT_ACCESS_SECRET,
-        expiresIn: process.env.JWT_ACCESS_EXPIRATION,
-      }),
-      this.jwtService.signAsync(payload, {
-        secret: process.env.JWT_REFRESH_SECRET,
-        expiresIn: process.env.JWT_REFRESH_EXPIRATION,
-      }),
-    ]);
-
-    return { accessToken, refreshToken };
-  }
 
   async requestCode(phoneNumber: string) {
     const code = await this.zvonokService.sendCall(phoneNumber);
@@ -72,9 +58,7 @@ export class AuthService {
 
     await otp.destroy();
 
-    const { accessToken, refreshToken } = await this.generateTokens({
-      sub: phoneNumber,
-    });
+    const { accessToken, refreshToken } = await this.tokensUtils.generateTokens(await this.usersService.loginByPhoneNumber(phoneNumber));
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,

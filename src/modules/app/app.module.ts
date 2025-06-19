@@ -11,6 +11,7 @@ import { LoggerModule } from "../logger/logger.module";
 import { FileLoaderService } from "../file-loader/file-loader.service";
 import { JwtDecodeMiddleware } from "../auth/middlewares/jwt.middleware";
 import { JwtModule } from "@nestjs/jwt";
+import { TokensUtils } from "../../utils/tokens.util";
 
 @Module({
   imports: [
@@ -37,7 +38,7 @@ import { JwtModule } from "@nestjs/jwt";
       },
     }),
   ],
-  providers: [FileLoaderService],
+  providers: [FileLoaderService, TokensUtils],
 })
 
 export class AppModule implements NestModule {

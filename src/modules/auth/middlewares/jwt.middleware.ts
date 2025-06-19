@@ -1,14 +1,14 @@
-import { Injectable, NestMiddleware, UnauthorizedException } from "@nestjs/common";
-import { JwtService } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
-import { Request, Response, NextFunction } from 'express';
+import {
+  Injectable,
+  NestMiddleware,
+  UnauthorizedException,
+} from "@nestjs/common";
+import { Request, Response, NextFunction } from "express";
+import { TokensUtils } from "../../../utils/tokens.util";
 
 @Injectable()
 export class JwtDecodeMiddleware implements NestMiddleware {
-  constructor(
-    private readonly jwtService: JwtService,
-    private readonly configService: ConfigService,
-  ) {}
+  constructor(private readonly tokensUtils: TokensUtils) {}
 
   async use(req: Request, res: Response, next: NextFunction) {
     const accessToken = this.extractTokenFromHeader(req);
@@ -18,31 +18,21 @@ export class JwtDecodeMiddleware implements NestMiddleware {
       return next();
     }
 
-    console.log(accessToken, refreshToken);
-
     try {
-      req.user = await this.jwtService.verifyAsync(accessToken || '', {
-        secret: this.configService.get<string>('JWT_ACCESS_SECRET'),
-      });
+      req.user = await this.tokensUtils.validateAccessToken(accessToken);
     } catch (e) {
       if (refreshToken) {
         try {
-          const payload = await this.jwtService.verifyAsync(refreshToken, {
-            secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
-          });
-
-          const newAccessToken = await this.jwtService.signAsync(
-            { sub: payload.sub },
-            {
-              secret: this.configService.get<string>('JWT_ACCESS_SECRET'),
-              expiresIn: this.configService.get<string>('JWT_ACCESS_EXPIRATION'),
-            },
-          );
-
-          res.setHeader('Authorization', `Bearer ${newAccessToken}`);
+          const payload =
+            await this.tokensUtils.validateRefreshToken(refreshToken);
+          if (!payload) {
+            throw new Error("Payload is empty");
+          }
+          const newAccessToken =
+            await this.tokensUtils.generateAccessToken(payload);
+          res.setHeader("Authorization", `Bearer ${newAccessToken}`);
           req.user = payload;
-        } catch (err) {
-        }
+        } catch (err) {}
       }
     }
 
@@ -50,12 +40,11 @@ export class JwtDecodeMiddleware implements NestMiddleware {
   }
 
   private extractTokenFromHeader(request: Request): string | null {
-    console.log(request.headers)
-    const authHeader = request.headers['Authorization'];
+    const authHeader = request.headers["Authorization"];
     if (!authHeader) return null;
     if (typeof authHeader === "string") {
       const parts = authHeader.split(" ");
-      if (parts.length !== 2 || parts[0] !== 'Bearer') return null;
+      if (parts.length !== 2 || parts[0] !== "Bearer") return null;
       return parts[1];
     }
     throw new UnauthorizedException();
