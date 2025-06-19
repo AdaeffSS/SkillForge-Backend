@@ -20,6 +20,8 @@ export class LoggerMiddleware implements NestMiddleware {
       `${chalk.bgYellowBright.hex("1E1E1E").bold(" >> Incoming >> ")} ${method} ${originalUrl} [ID: ${requestId}]`,
     );
 
+    console.log(req.user)
+
     res.on("finish", () => {
       const statusCode = res.statusCode;
       const duration = Date.now() - startTime;

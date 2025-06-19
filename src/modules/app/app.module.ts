@@ -1,23 +1,27 @@
 import { MiddlewareConsumer, Module, NestModule } from "@nestjs/common";
-import { SequelizeModule } from '@nestjs/sequelize'
-import { ConfigModule } from '@nestjs/config'
+import { SequelizeModule } from "@nestjs/sequelize";
+import { ConfigModule } from "@nestjs/config";
 import { User } from "../users/entities/user.entity";
 import { Otp } from "../auth/entites/otp.entity";
 import { AuthModule } from "../auth/auth.module";
-import { Logger } from '../logger/logger.service'
+import { Logger } from "../logger/logger.service";
 import * as process from "node:process";
 import { LoggerMiddleware } from "../logger/logger.middleware";
 import { LoggerModule } from "../logger/logger.module";
+import { FileLoaderService } from "../file-loader/file-loader.service";
+import { JwtDecodeMiddleware } from "../auth/middlewares/jwt.middleware";
+import { JwtModule } from "@nestjs/jwt";
 
 @Module({
   imports: [
     LoggerModule,
+    JwtModule,
     AuthModule,
     ConfigModule.forRoot({
-      envFilePath: '.env',
+      envFilePath: ".env",
     }),
     SequelizeModule.forRoot({
-      dialect: 'postgres',
+      dialect: "postgres",
       host: process.env.DB_HOST,
       port: Number(process.env.DB_PORT) || 5432,
       username: process.env.DB_USER,
@@ -28,17 +32,16 @@ import { LoggerModule } from "../logger/logger.module";
       synchronize: true,
       logging: (msg: string) => {
         const logger = new Logger();
-        logger.setContext('Sequelize');
+        logger.setContext("Sequelize");
         logger.log(msg);
-      }
+      },
     }),
-  ]
+  ],
+  providers: [FileLoaderService],
 })
 
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply(LoggerMiddleware)
-      .forRoutes('{*path}')
+    consumer.apply(JwtDecodeMiddleware, LoggerMiddleware).forRoutes("{*path}");
   }
 }

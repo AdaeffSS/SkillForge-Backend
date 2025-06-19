@@ -47,7 +47,7 @@ export class Logger implements BaseLogger {
                 default:
                   coloredLevel = chalk.gray(level.toUpperCase());
               }
-              return `${coloredLevel} ${chalk.magenta(
+              return `${coloredLevel} ${chalk.bold.hex('#B2004D')(
                 service,
               )} ${timestamp}: ${message}`;
             }),
