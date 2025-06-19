@@ -5,10 +5,12 @@ import { ZvonokModule } from "../zvonok/zvonok.module";
 import { SequelizeModule } from "@nestjs/sequelize";
 import { Otp } from "./entites/otp.entity";
 import { JwtModule } from "@nestjs/jwt";
+import { ConfigModule } from "@nestjs/config";
 
 @Module({
   imports: [
     JwtModule.register({}),
+    ConfigModule,
     ZvonokModule,
     SequelizeModule.forFeature([Otp]),
   ],
