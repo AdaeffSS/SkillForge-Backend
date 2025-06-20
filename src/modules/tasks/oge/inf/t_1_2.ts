@@ -3,6 +3,7 @@ import { BaseTask } from '../../baseTask'
 import { NameCreator } from "src/modules/params-generator/params-creators/nameCreator";
 import { RegisterTask } from "../../tasks.decorator";
 import { Exam, Sub } from "../../enums";
+import { EncodingCreator } from "src/modules/params-generator/params-creators/encodingCreator";
 
 interface ParamsT11 {
   name: string;
