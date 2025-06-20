@@ -1,38 +1,39 @@
-import { Injectable } from "@nestjs/common";
-import { Exam, Sub } from "./enums";
-import { BaseTask } from "./baseTask";
-import { TaskOgeInfT11 } from "./oge/inf/t_1_1";
-import { TaskOgeInfT12 } from "./oge/inf/t_1_2";
+// tasks.manager.ts
+import { Injectable, OnModuleInit } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
+import { tasksRegistry } from './tasks.registry';
+import { BaseTask } from './baseTask';
 
 @Injectable()
-export class TasksManager {
+export class TasksManager implements OnModuleInit {
   private readonly registry = new Map<string, BaseTask<any>>();
 
-  constructor(
-    private readonly taskOgeInfT11: TaskOgeInfT11,
-    private readonly taskOgeInfT12: TaskOgeInfT12
-  ) {
-    this.register(Exam.OGE, Sub.INFO, "t_1_1", taskOgeInfT11);
-    this.register(Exam.OGE, Sub.INFO, 't_1_2', taskOgeInfT12);
+  constructor(private readonly moduleRef: ModuleRef) {}
+
+  async onModuleInit() {
+    for (const taskClass of tasksRegistry) {
+      const taskInstance = this.moduleRef.get(taskClass, { strict: false });
+      if (!taskInstance) continue;
+
+      const exam = Reflect.getMetadata('exam', taskClass);
+      const subject = Reflect.getMetadata('subject', taskClass);
+      const taskKey = Reflect.getMetadata('taskKey', taskClass);
+
+      if (!exam || !subject || !taskKey) {
+        throw new Error(`Task ${taskClass.name} is missing metadata`);
+      }
+
+      const compositeKey = `${exam}/${subject}/${taskKey}`;
+      this.registry.set(compositeKey, taskInstance);
+    }
   }
 
-  private register(exam: Exam, subject: Sub, key: string, task: BaseTask<any>) {
-    const compositeKey = this.composeKey(exam, subject, key);
-    this.registry.set(compositeKey, task);
-  }
-
-  private composeKey(exam: Exam, subject: Sub, key: string): string {
-    return `${exam}_${subject}_${key}`;
-  }
-
-  getTask<T>(exam: Exam, subject: Sub, key: string): BaseTask<T> {
-    const compositeKey = this.composeKey(exam, subject, key);
+  getTask<T>(exam: string, subject: string, key: string): BaseTask<T> {
+    const compositeKey = `${exam}/${subject}/${key}`;
     const task = this.registry.get(compositeKey);
-
     if (!task) {
       throw new Error(`Task not found: ${compositeKey}`);
     }
-
     return task;
   }
 }

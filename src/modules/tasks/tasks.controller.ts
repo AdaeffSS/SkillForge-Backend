@@ -1,6 +1,7 @@
 import { Controller, Get } from "@nestjs/common";
 import { TasksManager } from "./tasks.manager";
 import { Exam, Sub } from "./enums";
+import { tasksRegistry } from "./tasks.registry";
 
 @Controller("tasks")
 export class TasksController {

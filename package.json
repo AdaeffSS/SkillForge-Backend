@@ -34,6 +34,7 @@
     "class-validator": "^0.14.2",
     "cookie": "^1.0.2",
     "cookie-parser": "^1.4.7",
+    "fast-glob": "^3.3.3",
     "js-yaml": "^4.1.0",
     "jsonwebtoken": "^9.0.2",
     "mime-types": "^3.0.1",

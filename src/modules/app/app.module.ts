@@ -1,4 +1,4 @@
-import { MiddlewareConsumer, Module, NestModule } from "@nestjs/common";
+import { MiddlewareConsumer, Module, NestModule, DynamicModule } from "@nestjs/common";
 import { SequelizeModule } from "@nestjs/sequelize";
 import { ConfigModule } from "@nestjs/config";
 import { User } from "../users/entities/user.entity";
@@ -13,37 +13,44 @@ import { JwtDecodeMiddleware } from "../auth/middlewares/jwt.middleware";
 import { JwtModule } from "@nestjs/jwt";
 import { TokensUtils } from "../../utils/tokens.util";
 import { TasksModule } from "../tasks/tasks.module";
+import { importAllTasks } from "../../import";
 
-@Module({
-  imports: [
-    TasksModule,
-    LoggerModule,
-    JwtModule,
-    AuthModule,
-    ConfigModule.forRoot({
-      envFilePath: ".env",
-    }),
-    SequelizeModule.forRoot({
-      dialect: "postgres",
-      host: process.env.DB_HOST,
-      port: Number(process.env.DB_PORT) || 5432,
-      username: process.env.DB_USER,
-      password: process.env.DB_PASSWORD,
-      database: process.env.DB_NAME,
-      models: [User, Otp],
-      autoLoadModels: true,
-      synchronize: true,
-      logging: (msg: string) => {
-        const logger = new Logger();
-        logger.setContext("Sequelize");
-        logger.log(msg);
-      },
-    }),
-  ],
-  providers: [FileLoaderService, TokensUtils],
-})
-
+@Module({})
 export class AppModule implements NestModule {
+  static async forRootAsync(): Promise<DynamicModule> {
+    const tasksClasses = await importAllTasks();
+
+    return {
+      module: AppModule,
+      imports: [
+        TasksModule.forRoot(tasksClasses),
+        LoggerModule,
+        JwtModule,
+        AuthModule,
+        ConfigModule.forRoot({
+          envFilePath: ".env",
+        }),
+        SequelizeModule.forRoot({
+          dialect: "postgres",
+          host: process.env.DB_HOST,
+          port: Number(process.env.DB_PORT) || 5432,
+          username: process.env.DB_USER,
+          password: process.env.DB_PASSWORD,
+          database: process.env.DB_NAME,
+          models: [User, Otp],
+          autoLoadModels: true,
+          synchronize: true,
+          logging: (msg: string) => {
+            const logger = new Logger();
+            logger.setContext("Sequelize");
+            logger.log(msg);
+          },
+        }),
+      ],
+      providers: [FileLoaderService, TokensUtils],
+    };
+  }
+
   configure(consumer: MiddlewareConsumer) {
     consumer.apply(JwtDecodeMiddleware, LoggerMiddleware).forRoutes("{*path}");
   }
