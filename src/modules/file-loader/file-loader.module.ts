@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
 import { FileLoaderService } from './file-loader.service';
-import { Logger } from "../logger/logger.service";
+import { LoggerModule } from "../logger/logger.module";
 
 @Module({
-  imports: [Logger],
-  controllers: [],
+  imports: [LoggerModule],
   providers: [FileLoaderService],
+  exports: [FileLoaderService],
 })
 export class FileLoaderModule {}

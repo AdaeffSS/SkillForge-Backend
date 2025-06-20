@@ -1,22 +1,39 @@
 import { Injectable } from '@nestjs/common'
-import { ParamsGeneratorService } from '../../../params-generator/params-generator.service'
 import { paramsCreatorsRegistry } from '../../../params-generator/params-creators'
+import { BaseTask } from '../../baseTask'
+
+interface ParamsT11 {
+  name: string;
+  encoding: string;
+  bitWeight: number;
+  textLength: number;
+  totalBits: number;
+}
 
 @Injectable()
-export class TaskOgeInfT11 {
-  constructor(private readonly paramsGenerator: ParamsGeneratorService) {}
+export class TaskOgeInfT11 extends BaseTask<ParamsT11> {
+  protected taskKey = 't_1_1'
 
-  private paramsSchema = {
-    name: paramsCreatorsRegistry.name,
-    encoding: paramsCreatorsRegistry.encoding,
-    bitWeight: paramsCreatorsRegistry.bitWeight,
-    textLength: paramsCreatorsRegistry.textLength,
-  }
-
-  async createTask(): Promise<string> {
-    const params = await this.paramsGenerator.generateParams(this.paramsSchema)
-    const totalBits = params.bitWeight * params.textLength
-
-    return `${params.name} в кодировке ${params.encoding}, где каждый символ кодируется ${params.bitWeight} битами, написал текст из ${params.textLength} символов. Итого у него получилось: ${totalBits} бит.`
+  protected paramsSchema = {
+    name: {
+      creator: paramsCreatorsRegistry.name,
+      depends: {}
+    },
+    encoding: {
+      creator: paramsCreatorsRegistry.encoding,
+      depends: {}
+    },
+    bitWeight: {
+      creator: paramsCreatorsRegistry.bitWeight,
+      depends: { encoding: 'encoding' }
+    },
+    textLength: {
+      creator: paramsCreatorsRegistry.textLength,
+      depends: {}
+    },
+    totalBits: {
+      creator: (params: { bitWeight: number; textLength: number }) => params.bitWeight * params.textLength,
+      depends: { bitWeight: 'bitWeight', textLength: 'textLength' }
+    }
   }
 }

@@ -24,14 +24,6 @@ async function bootstrap () {
 
   const port = process.env.PORT || 3000;
   await app.listen(port);
-  const fileLoaderService = app.get(FileLoaderService);
-  try {
-    await fileLoaderService.loadAllTasks();
-    logger.log("Tasks initialized before application startup");
-  } catch (error) {
-    logger.error(`Failed to initialize tasks: ${error.message}`, error.stack);
-    throw error;
-  }
   logger.log(chalk.greenBright.bgGreen.bold(` Server started on port ${port} `));
 }
 

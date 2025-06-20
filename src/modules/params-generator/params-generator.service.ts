@@ -1,39 +1,55 @@
-// /modules/params-generator/params-generator.service.ts
-
 import { Injectable } from '@nestjs/common'
 import type { IParams } from './params-creators/parameterCreator'
 import type { ParameterCreator } from './params-creators/parameterCreator'
 
+type CreatorFn = (params: Record<string, any>) => any | Promise<any>
+
+interface ParamConfig {
+  creator: ParameterCreator | CreatorFn
+  depends: Record<string, string>
+}
+
 @Injectable()
 export class ParamsGeneratorService {
-  private visited = new Set<string>()
-  private result: IParams = {}
-
-  async generateParams(
-    schema: Record<string, ParameterCreator>,
-  ): Promise<IParams> {
-    this.visited.clear()
-    this.result = {}
+  async generateParams(schema: Record<string, ParamConfig>): Promise<IParams> {
+    const visited = new Set<string>()
+    const stack = new Set<string>()
+    const result: IParams = {}
 
     const dfs = async (param: string) => {
-      if (this.visited.has(param)) return
+      if (visited.has(param)) return
+      if (stack.has(param)) throw new Error(`Cyclic dependency detected: ${param}`)
 
-      const creator = schema[param]
-      if (!creator) throw new Error(`Parameter "${param}" is not defined in schema`)
+      stack.add(param)
 
-      if (creator.dependsOn.length > 0) {
-        for (const dep of creator.dependsOn) {
-          await dfs(dep)
-        }
+      const config = schema[param]
+      if (!config) throw new Error(`Parameter "${param}" not defined in schema`)
+
+      const dependencies = Object.values(config.depends)
+
+      for (const dep of dependencies) {
+        await dfs(dep)
       }
 
-      this.result[param] = await creator.generate(this.result)
-      this.visited.add(param)
+      const inputParams: Record<string, any> = {}
+      for (const [inputKey, resultKey] of Object.entries(config.depends)) {
+        inputParams[inputKey] = result[resultKey]
+      }
+
+      if (typeof config.creator === 'function') {
+        result[param] = await config.creator(inputParams)
+      } else {
+        result[param] = await config.creator.generate(inputParams)
+      }
+
+      visited.add(param)
+      stack.delete(param)
     }
 
     for (const param of Object.keys(schema)) {
       await dfs(param)
     }
-    return this.result
+
+    return result
   }
 }
