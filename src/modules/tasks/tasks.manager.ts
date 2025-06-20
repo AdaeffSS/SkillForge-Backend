@@ -1,4 +1,3 @@
-// tasks.manager.ts
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { tasksRegistry } from './tasks.registry';
@@ -23,13 +22,13 @@ export class TasksManager implements OnModuleInit {
         throw new Error(`Task ${taskClass.name} is missing metadata`);
       }
 
-      const compositeKey = `${exam}/${subject}/${taskKey}`;
+      const compositeKey = `${exam}.${subject}.${taskKey}`;
       this.registry.set(compositeKey, taskInstance);
     }
   }
 
   getTask<T>(exam: string, subject: string, key: string): BaseTask<T> {
-    const compositeKey = `${exam}/${subject}/${key}`;
+    const compositeKey = `${exam}.${subject}.${key}`;
     const task = this.registry.get(compositeKey);
     if (!task) {
       throw new Error(`Task not found: ${compositeKey}`);

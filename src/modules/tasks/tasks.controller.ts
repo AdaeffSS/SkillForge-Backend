@@ -1,14 +1,13 @@
 import { Controller, Get } from "@nestjs/common";
 import { TasksManager } from "./tasks.manager";
 import { Exam, Sub } from "./enums";
-import { tasksRegistry } from "./tasks.registry";
 
 @Controller("tasks")
 export class TasksController {
   constructor(private readonly taskManager: TasksManager) {}
 
   @Get()
-  async getTask(): Promise<string> {
-    return await this.taskManager.getTask(Exam.OGE, Sub.INFO, 't_1_2').createTask();
+  async getTask() {
+    return this.taskManager.getTask(Exam.OGE, Sub.INFO, 't_1_1').createTask()
   }
 }

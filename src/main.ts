@@ -6,21 +6,23 @@ import { Logger } from "./modules/logger/logger.service";
 import chalk from "chalk";
 
 async function bootstrap () {
+  const logger = new Logger();
+  logger.setContext('Bootstrap');
   const dynamicAppModule = await AppModule.forRootAsync();
-  const app = await NestFactory.create(dynamicAppModule);
+  const app = await NestFactory.create(dynamicAppModule, {
+    logger: logger,
+  });
 
   app.useGlobalPipes(new ValidationPipe());
   app.setGlobalPrefix('/api/v1/')
   app.enableCors()
   app.use(cookieParser())
 
-  const logger = new Logger();
-  logger.setContext('Bootstrap');
   app.useLogger(logger)
 
-  const port = process.env.PORT || 3000;
+  const port = process.env.PORT || 4000;
   await app.listen(port);
   logger.log(chalk.greenBright.bgGreen.bold(` Server started on port ${port} `));
 }
 
-bootstrap();
+bootstrap().then(() => {});

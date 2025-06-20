@@ -1,7 +1,7 @@
-import { FileLoaderService } from "../file-loader/file-loader.service";
 import { ParamsGeneratorService } from "../params-generator/params-generator.service";
-import { Injectable } from "@nestjs/common";
+import { HttpException, Injectable } from "@nestjs/common";
 import mustache from "mustache";
+import {FileLoaderService} from "../file-loader/file-loader.service";
 
 @Injectable()
 export abstract class BaseTask<TParams> {
@@ -22,6 +22,7 @@ export abstract class BaseTask<TParams> {
   async createTask(): Promise<string> {
     const params = await this.paramsGenerator.generateParams(this.paramsSchema);
     const template = this.fileLoader.getTasks()[this.taskFolder][this.taskKey];
+    if (!template) { throw new HttpException("Template not found.", 404); }
     return mustache.render(template, params);
   }
 }

@@ -8,17 +8,18 @@ import { Logger } from "../logger/logger.service";
 import * as process from "node:process";
 import { LoggerMiddleware } from "../logger/logger.middleware";
 import { LoggerModule } from "../logger/logger.module";
-import { FileLoaderService } from "../file-loader/file-loader.service";
 import { JwtDecodeMiddleware } from "../auth/middlewares/jwt.middleware";
 import { JwtModule } from "@nestjs/jwt";
 import { TokensUtils } from "../../utils/tokens.util";
 import { TasksModule } from "../tasks/tasks.module";
-import { importAllTasks } from "../../import";
+import { TaskLoaderService } from "../tasks/tasks.loader";
 
 @Module({})
 export class AppModule implements NestModule {
   static async forRootAsync(): Promise<DynamicModule> {
-    const tasksClasses = await importAllTasks();
+
+    const taskLoaderService = new TaskLoaderService();
+    const tasksClasses = await taskLoaderService.importAllTasks();
 
     return {
       module: AppModule,
@@ -27,7 +28,7 @@ export class AppModule implements NestModule {
         LoggerModule,
         JwtModule,
         AuthModule,
-        ConfigModule.forRoot({
+        await ConfigModule.forRoot({
           envFilePath: ".env",
         }),
         SequelizeModule.forRoot({
@@ -47,7 +48,7 @@ export class AppModule implements NestModule {
           },
         }),
       ],
-      providers: [FileLoaderService, TokensUtils],
+      providers: [TokensUtils],
     };
   }
 
