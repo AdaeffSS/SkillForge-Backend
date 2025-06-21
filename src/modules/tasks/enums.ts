@@ -1,9 +1,9 @@
 export enum Exam {
-  OGE = 'OGE',
-  EGE = 'EGE',
+  OGE = 'oge',
+  EGE = 'ege',
 }
 
 export enum Sub {
-  INFO = 'INFO',
-  MATH = 'MATH',
+  INFO = 'info',
+  MATH = 'math',
 }

@@ -16,7 +16,6 @@ async function bootstrap () {
   const app = await NestFactory.create(await AppModule.forRootAsync(tasksClasses, taskLoader), {
     logger: logger,
   });
-  const port = process.env.PORT || 4000;
   app.useGlobalPipes(new ValidationPipe());
   app.setGlobalPrefix('/api/v1/')
   app.enableCors()
@@ -24,6 +23,7 @@ async function bootstrap () {
 
   app.useLogger(logger)
 
+  const port = process.env.PORT || 4000;
   await app.listen(port);
   logger.log(chalk.greenBright.bgGreen.bold(` Server started on port ${port} `));
 }

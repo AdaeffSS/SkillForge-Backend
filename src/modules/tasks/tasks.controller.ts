@@ -1,4 +1,4 @@
-import { Controller, Get } from "@nestjs/common";
+import { Controller, Get, Query } from "@nestjs/common";
 import { TasksManager } from "./tasks.manager";
 import { Exam, Sub } from "./enums";
 
@@ -7,7 +7,11 @@ export class TasksController {
   constructor(private readonly taskManager: TasksManager) {}
 
   @Get()
-  async getTask() {
-    return this.taskManager.getTask(Exam.OGE, Sub.INFO, 't_1_1').createTask()
+  async getTask(
+    @Query('exam') exam: Exam,
+    @Query('subject') subject: Sub,
+    @Query('task') task: string
+  ) {
+    return this.taskManager.getTask(exam, subject, task).createTask()
   }
 }
