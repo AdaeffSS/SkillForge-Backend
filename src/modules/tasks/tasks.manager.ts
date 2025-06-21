@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { HttpException, Injectable, OnModuleInit } from "@nestjs/common";
 import { ModuleRef } from '@nestjs/core';
 import { tasksRegistry } from './tasks.registry';
 import { BaseTask } from './baseTask';
@@ -29,10 +29,20 @@ export class TasksManager implements OnModuleInit {
 
   getTask<T>(exam: string, subject: string, key: string): BaseTask<T> {
     const compositeKey = `${exam}.${subject}.${key}`;
-    const task = this.registry.get(compositeKey);
-    if (!task) {
-      throw new Error(`Task not found: ${compositeKey}`);
+
+    const exactTask = this.registry.get(compositeKey);
+    if (exactTask) {
+      return exactTask;
     }
-    return task;
+
+    const matchingKeys = Array.from(this.registry.keys()).filter(k => k.startsWith(`${compositeKey}_`));
+
+    if (matchingKeys.length === 0) {
+      throw new HttpException(`Task not found: ${compositeKey}`, 404);
+    }
+
+    const randomKey = matchingKeys[Math.floor(Math.random() * matchingKeys.length)];
+    return this.registry.get(randomKey)!;
   }
+
 }
