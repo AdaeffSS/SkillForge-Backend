@@ -69,6 +69,7 @@ export class TaskLoaderService {
           `The task file is successfully imported: ${basename(relative(`${rootPath}/dist/modules/tasks/`, filePath), '.js')}`,
         );
       } catch (error) {
+        console.error(error);
         this.logger.error(
           `Error when importing file: ${relative(`${rootPath}/dist/modules/tasks/`, filePath)}`,
         );

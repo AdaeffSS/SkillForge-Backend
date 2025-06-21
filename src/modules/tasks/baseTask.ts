@@ -10,8 +10,6 @@ export abstract class BaseTask<TParams> {
     protected readonly paramsGenerator: ParamsGeneratorService,
     protected readonly taskLoader: TaskLoaderService,
   ) {}
-
-  protected abstract taskKey: string;
   protected abstract paramsSchema: any;
 
 
