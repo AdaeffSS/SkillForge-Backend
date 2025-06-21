@@ -4,7 +4,7 @@ import {
   UnauthorizedException,
 } from "@nestjs/common";
 import { Request, Response, NextFunction } from "express";
-import { TokensUtils } from "../../../utils/tokens.util";
+import { TokensUtils } from "../utils/tokens.util";
 
 @Injectable()
 export class JwtDecodeMiddleware implements NestMiddleware {

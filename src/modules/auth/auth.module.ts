@@ -6,12 +6,12 @@ import { SequelizeModule } from "@nestjs/sequelize";
 import { Otp } from "./entites/otp.entity";
 import { JwtModule } from "@nestjs/jwt";
 import { ConfigModule } from "@nestjs/config";
-import { TokensUtils } from "../../utils/tokens.util";
+import { TokensUtils } from "./utils/tokens.util";
 import { UsersModule } from "../users/users.module";
 
 @Module({
   imports: [
-    JwtModule.register({}),
+    JwtModule,
     UsersModule,
     ConfigModule,
     ZvonokModule,

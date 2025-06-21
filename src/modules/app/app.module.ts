@@ -10,7 +10,7 @@ import { LoggerMiddleware } from "../logger/logger.middleware";
 import { LoggerModule } from "../logger/logger.module";
 import { JwtDecodeMiddleware } from "../auth/middlewares/jwt.middleware";
 import { JwtModule } from "@nestjs/jwt";
-import { TokensUtils } from "../../utils/tokens.util";
+import { TokensUtils } from "../auth/utils/tokens.util";
 import { TasksModule } from "../tasks/tasks.module";
 import { TaskLoaderService } from "../tasks/tasks.loader";
 
