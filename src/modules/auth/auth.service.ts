@@ -3,7 +3,7 @@ import { ZvonokService } from "../zvonok/zvonok.service";
 import { InjectModel } from "@nestjs/sequelize";
 import { Otp } from "./entites/otp.entity";
 import { Response } from "express";
-import { TokensUtils } from "../../utils/tokens.util";
+import { TokensUtils } from "./utils/tokens.util";
 import { UsersService } from "../users/users.service";
 
 @Injectable()

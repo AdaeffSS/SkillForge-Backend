@@ -11,7 +11,6 @@ export class TokensUtils {
   ) {}
 
   async generateAccessToken(payload: object): Promise<string> {
-    console.log(payload)
 
     return await this.jwtService.signAsync(payload, {
       secret: this.configService.get<string>("JWT_ACCESS_SECRET"),
@@ -21,7 +20,6 @@ export class TokensUtils {
   }
 
   async generateRefreshToken(payload: object): Promise<string> {
-    console.log(payload)
     return await this.jwtService.signAsync(payload, {
       secret: this.configService.get<string>("JWT_REFRESH_SECRET"),
       expiresIn:
