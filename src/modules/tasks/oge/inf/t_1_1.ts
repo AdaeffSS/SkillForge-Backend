@@ -1,45 +1,71 @@
-import { Injectable } from '@nestjs/common'
-import { BaseTask } from '@tasks/baseTask'
-import { NameCreator } from "modules/params-generator/params-creators/nameCreator";
+import { Injectable } from "@nestjs/common";
+import { BaseTask } from '@tasks/baseTask';
 import { RegisterTask } from "@tasks/tasks.decorator";
 import { Exam, Sub } from "@tasks/enums";
-import { EncodingCreator } from "@pc/encodingCreator";
-import { BitWeightCreator } from "modules/params-generator/params-creators/bitWeightCreator";
-import { TextLengthCreator } from "@pc/textLengthCreator";
-
-interface Params {
-  name: string;
-  encoding: string;
-  bitWeight: number;
-  textLength: number;
-  totalBits: number;
-}
+import { ListPicker } from "@pc/ListPicker";
+import { NamePicker } from "@pc/namePicker";
 
 @Injectable()
 @RegisterTask(Exam.OGE, Sub.INFO, "t_1_1")
-export class Task extends BaseTask<Params> {
+export class Task extends BaseTask {
 
-  protected paramsSchema = {
+  protected readonly paramsSchema = {
+
     name: {
-      creator: new NameCreator(),
-      depends: {},
+      creator: (params: any): any => NamePicker(),
+      depends: {}
     },
     encoding: {
-      creator: new EncodingCreator(),
-      depends: {},
+      creator: (params: any): any => ListPicker([]),
+      depends: {}
     },
-    bitWeight: {
-      creator: new BitWeightCreator(),
-      depends: { encoding: "encoding" },
+    encodingWeight: {
+      creator: (params: any): any => ListPicker([]),
+      depends: { encoding: 'encoding' }
     },
-    textLength: {
-      creator: new TextLengthCreator(),
-      depends: {},
+    termin: {
+      creator: (params: any): any => ListPicker([["река", "одной из рек"], ["море", "одного из морей"]]),
+      depends: {}
     },
-    totalBits: {
-      creator: (params: { textLength: number; bitWeight: number }) =>
-        params.textLength * params.bitWeight,
-      depends: { textLength: "textLength", bitWeight: "bitWeight" },
+    termin1: {
+      creator: (params: any): any => params.termin[0],
+      depends: { termin: 'termin' }
     },
+    termin2: {
+      creator: (params: any): any => params.termin[1],
+      depends: { termin: 'termin' }
+    },
+    word3: {
+      creator: (params: any): any => ListPicker([params.termin[0], "озеро"]),
+      depends: { termin: 'termin' }
+    },
+    word4: {
+      creator: (params: any): any => ListPicker([]),
+      depends: { termin: 'termin' }
+    },
+    word5: {
+      creator: (params: any): any => ListPicker([]),
+      depends: { termin: 'termin' }
+    },
+    word6: {
+      creator: (params: any): any => ListPicker([]),
+      depends: { termin: 'termin' }
+    },
+    word7: {
+      creator: (params: any): any => ListPicker([]),
+      depends: { termin: 'termin' }
+    },
+    word8: {
+      creator: (params: any): any => ListPicker([]),
+      depends: { termin: 'termin' }
+    },
+    test: {
+      creator: (params: any): any => ListPicker([]),
+      depends: { termin: 'termin' }
+    },
+    delta: {
+      creator: (params: any): any => 7,
+      depends: {}
+    }
   };
 }
