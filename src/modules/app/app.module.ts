@@ -16,15 +16,11 @@ import { TaskLoaderService } from "../tasks/tasks.loader";
 
 @Module({})
 export class AppModule implements NestModule {
-  static async forRootAsync(): Promise<DynamicModule> {
-
-    const taskLoaderService = new TaskLoaderService();
-    const tasksClasses = await taskLoaderService.importAllTasks();
-
+  static async forRootAsync(tasksClasses: any[], taskLoader: TaskLoaderService): Promise<DynamicModule> {
     return {
       module: AppModule,
       imports: [
-        TasksModule.forRoot(tasksClasses),
+        TasksModule.forRoot(tasksClasses, taskLoader),
         LoggerModule,
         JwtModule,
         AuthModule,

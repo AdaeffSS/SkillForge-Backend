@@ -28,8 +28,6 @@ export abstract class BaseTask<TParams> {
     const params = await this.paramsGenerator.generateParams(this.paramsSchema);
     const template = this.taskLoader.getTemplate(exam, subject, taskKey);
 
-    console.log(template)
-
     if (!template) {
       throw new HttpException("Template not found.", 500);
     }

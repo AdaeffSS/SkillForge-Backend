@@ -1,18 +1,31 @@
-import { TasksController } from './tasks.controller'
-import { ParamsGeneratorService } from '../params-generator/params-generator.service'
+import { TasksController } from "./tasks.controller";
+import { ParamsGeneratorService } from "../params-generator/params-generator.service";
 import { TasksManager } from "./tasks.manager";
-import { Module, DynamicModule } from '@nestjs/common';
+import { Module, DynamicModule } from "@nestjs/common";
 import { TaskLoaderService } from "./tasks.loader";
 import { LoggerModule } from "../logger/logger.module";
+import { Logger } from "../logger/logger.service";
 
 @Module({})
 export class TasksModule {
-  static forRoot(tasksClasses: any[]): DynamicModule {
+  static forRoot(
+    tasksClasses: any[],
+    taskLoader: TaskLoaderService,
+  ): DynamicModule {
     return {
       module: TasksModule,
       imports: [LoggerModule],
       controllers: [TasksController],
-      providers: [...tasksClasses, ParamsGeneratorService, TasksManager, TaskLoaderService],
+      providers: [
+        ...tasksClasses,
+        ParamsGeneratorService,
+        Logger,
+        TasksManager,
+        {
+          provide: TaskLoaderService,
+          useValue: taskLoader,
+        },
+      ],
       exports: [...tasksClasses, TaskLoaderService],
     };
   }
