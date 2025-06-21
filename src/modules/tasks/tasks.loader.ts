@@ -55,6 +55,7 @@ export class TaskLoaderService {
     const entries = await fg(["*/**/*.js"], {
       cwd: tasksDir,
       absolute: true,
+      ignore: ["entities/*.js"],
     });
 
     this.logger.log(`Found files for imports: ${entries.length}`);
