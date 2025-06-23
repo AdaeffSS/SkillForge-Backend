@@ -6,7 +6,6 @@ import { TaskLoaderService } from "./tasks.loader";
 import { LoggerModule } from "../logger/logger.module";
 import { Logger } from "../logger/logger.service";
 import { SequelizeModule } from "@nestjs/sequelize";
-import { User } from "../users/entities/user.entity";
 import { Task } from "@tasks/entities/task.entity";
 
 @Module({})

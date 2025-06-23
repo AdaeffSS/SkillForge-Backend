@@ -4,8 +4,6 @@ import {
   Model,
   PrimaryKey,
   DataType,
-  Default,
-  Unique,
 } from "sequelize-typescript";
 
 @Table({

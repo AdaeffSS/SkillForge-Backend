@@ -11,8 +11,8 @@ import { LoggerModule } from "../logger/logger.module";
 import { JwtDecodeMiddleware } from "../auth/middlewares/jwt.middleware";
 import { JwtModule } from "@nestjs/jwt";
 import { TokensUtils } from "../auth/utils/tokens.util";
-import { TasksModule } from "../tasks/tasks.module";
-import { TaskLoaderService } from "../tasks/tasks.loader";
+import { TasksModule } from "@tasks/tasks.module";
+import { TaskLoaderService } from "@tasks/tasks.loader";
 
 @Module({})
 export class AppModule implements NestModule {

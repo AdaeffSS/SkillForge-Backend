@@ -53,6 +53,27 @@ export class Task extends BaseTask {
       creator: (params: any): any => params.encoding.weight,
       depends: { encoding: "encoding" },
     },
+
+    encodingUnitText: {
+      creator: (params: any): any => {
+        const weight = params.encoding.weight;
+        if (weight % 8 === 0) {
+          const unit = this.random.pick(['бит', 'байт']);
+          if (unit === 'бит') {
+            return `${weight} битами`;
+          } else {
+            const value = weight / 8;
+            const suffix = value === 1
+              ? 'байтом'
+              : 'байтами';
+            return `${value} ${suffix}`;
+          }
+        }
+        return `${weight} битами`;
+      },
+      depends: { encoding: "encoding" },
+    },
+
     termin: {
       creator: (params: any): any => this.random.pick(this.parameters.termins),
       depends: {},
@@ -118,10 +139,30 @@ export class Task extends BaseTask {
         word8: "word8",
       },
     },
+
     delta: {
       creator: (params: any): any => (params.removedWord.length + 2) * params.encodingWeight,
       depends: { removedWord : "removedWord", encodingWeight: "encodingWeight" },
     },
+
+    deltaUnitText: {
+      creator: (params: any): any => {
+        if (params.delta % 8 === 0) {
+          const unit = this.random.pick(['бит', 'байт']);
+          if (unit === 'бит') return `${params.delta} бит`;
+          else {
+            const value = params.delta / 8
+            const suffix = value === 1
+              ? 'байт'
+              : (value >= 2 && value <= 4 ? 'байта' : 'байт');
+            return `${value} ${suffix}`;
+          }
+        }
+        return `${params.delta} бит`;
+      },
+      depends: { delta: 'delta'}
+    },
+
     seed: {
       creator: (params: any): any => this.random.getSeed(),
       depends: {},
