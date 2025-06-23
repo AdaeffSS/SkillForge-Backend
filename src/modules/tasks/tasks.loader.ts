@@ -169,10 +169,10 @@ export class TaskLoaderService {
     const params = this.parameters[key];
     if (!params) {
       this.logger.error(
-        `Parameters not found for task ${taskKey} in ${exam}/${subject} for key: ${key}`,
+        `Parameters not found for task ${taskKey} in ${exam}.${subject} for key: ${key}`,
       );
       throw new Error(
-        `Parameters not found for task ${taskKey} in ${exam}/${subject} for key: ${key}`,
+        `Parameters not found for task ${taskKey} in ${exam}.${subject} for key: ${key}`,
       );
     }
     return params;
