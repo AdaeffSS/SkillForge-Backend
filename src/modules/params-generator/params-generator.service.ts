@@ -1,22 +1,22 @@
 import { Injectable } from '@nestjs/common'
-import type { IParams } from './params-creators/parameterCreator'
-import type { ParameterCreator } from './params-creators/parameterCreator'
 
-type CreatorFn = (params: Record<string, any>) => any | Promise<any>
+export type CreatorFn = (params: Record<string, any>) => any | Promise<any>;
 
-interface ParamConfig {
-  creator: ParameterCreator | CreatorFn
+export interface ParamConfig {
+  creator: CreatorFn;
   depends: Record<string, string>
 }
 
+export type ParamSchema = Record<string, ParamConfig>;
+
 @Injectable()
 export class ParamsGeneratorService {
-  async generateParams(schema: Record<string, ParamConfig>): Promise<IParams> {
+  async generateParams(schema: ParamSchema): Promise<Record<string, any>> {
     const visited = new Set<string>()
     const stack = new Set<string>()
-    const result: IParams = {}
+    const result: Record<string, any> = {}
 
-    const dfs = async (param: string) => {
+    const dfs = async (param: string): Promise<void> => {
       if (visited.has(param)) return
       if (stack.has(param)) throw new Error(`Cyclic dependency detected: ${param}`)
 
@@ -25,22 +25,19 @@ export class ParamsGeneratorService {
       const config = schema[param]
       if (!config) throw new Error(`Parameter "${param}" not defined in schema`)
 
-      const dependencies = Object.values(config.depends)
 
-      for (const dep of dependencies) {
+      for (const dep of Object.values(config.depends)) {
         await dfs(dep)
       }
+
 
       const inputParams: Record<string, any> = {}
       for (const [inputKey, resultKey] of Object.entries(config.depends)) {
         inputParams[inputKey] = result[resultKey]
       }
 
-      if (typeof config.creator === 'function') {
-        result[param] = await config.creator(inputParams)
-      } else {
-        result[param] = await config.creator.generate(inputParams)
-      }
+
+      result[param] = await config.creator(inputParams)
 
       visited.add(param)
       stack.delete(param)

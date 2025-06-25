@@ -5,7 +5,7 @@ import { BaseTask } from './baseTask';
 
 @Injectable()
 export class TasksManager implements OnModuleInit {
-  private readonly registry = new Map<string, BaseTask<any>>();
+  private readonly registry = new Map<string, BaseTask>();
 
   constructor(private readonly moduleRef: ModuleRef) {}
 
@@ -27,7 +27,7 @@ export class TasksManager implements OnModuleInit {
     }
   }
 
-  getTask<T>(exam: string, subject: string, key: string): BaseTask<T> {
+  getTask<T>(exam: string, subject: string, key: string): BaseTask {
     const compositeKey = `${exam}.${subject}.${key}`;
 
     const exactTask = this.registry.get(compositeKey);

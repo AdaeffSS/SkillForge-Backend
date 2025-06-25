@@ -7,34 +7,27 @@ import {
 } from "sequelize-typescript";
 
 @Table({
-  tableName: "users",
+  tableName: "tasks",
   timestamps: true,
 })
-export class User extends Model {
+export class Task extends Model {
   @PrimaryKey
   @Column({
     type: DataType.UUID,
     defaultValue: DataType.UUIDV4,
+    unique: true,
   })
   declare id: string;
 
   @Column({
     type: DataType.STRING,
     allowNull: false,
-    unique: true,
   })
-  declare phoneNumber: string;
-
-  @Column({
-    type: DataType.ENUM("user", "admin"),
-    allowNull: false,
-    defaultValue: "user",
-  })
-  declare role: string;
+  declare seed: string;
 
   @Column({
     type: DataType.STRING,
-    allowNull: true,
+    allowNull: false,
   })
-  declare username: string;
+  declare answer: string;
 }

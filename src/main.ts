@@ -4,7 +4,7 @@ import { ValidationPipe } from "@nestjs/common";
 import cookieParser from 'cookie-parser'
 import { Logger } from "./modules/logger/logger.service";
 import chalk from "chalk";
-import { TaskLoaderService } from "./modules/tasks/tasks.loader";
+import { TaskLoaderService } from "@tasks/tasks.loader";
 
 async function bootstrap () {
   const logger = new Logger();

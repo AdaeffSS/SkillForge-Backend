@@ -55,6 +55,7 @@ export class TaskLoaderService {
     const entries = await fg(["*/**/*.js"], {
       cwd: tasksDir,
       absolute: true,
+      ignore: ["entities/*.js"],
     });
 
     this.logger.log(`Found files for imports: ${entries.length}`);
@@ -69,6 +70,7 @@ export class TaskLoaderService {
           `The task file is successfully imported: ${basename(relative(`${rootPath}/dist/modules/tasks/`, filePath), '.js')}`,
         );
       } catch (error) {
+        console.error(error);
         this.logger.error(
           `Error when importing file: ${relative(`${rootPath}/dist/modules/tasks/`, filePath)}`,
         );
@@ -167,10 +169,10 @@ export class TaskLoaderService {
     const params = this.parameters[key];
     if (!params) {
       this.logger.error(
-        `Parameters not found for task ${taskKey} in ${exam}/${subject} for key: ${key}`,
+        `Parameters not found for task ${taskKey} in ${exam}.${subject} for key: ${key}`,
       );
       throw new Error(
-        `Parameters not found for task ${taskKey} in ${exam}/${subject} for key: ${key}`,
+        `Parameters not found for task ${taskKey} in ${exam}.${subject} for key: ${key}`,
       );
     }
     return params;

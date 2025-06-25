@@ -11,8 +11,10 @@ import { LoggerModule } from "../logger/logger.module";
 import { JwtDecodeMiddleware } from "../auth/middlewares/jwt.middleware";
 import { JwtModule } from "@nestjs/jwt";
 import { TokensUtils } from "../auth/utils/tokens.util";
-import { TasksModule } from "../tasks/tasks.module";
-import { TaskLoaderService } from "../tasks/tasks.loader";
+import { TasksModule } from "@tasks/tasks.module";
+import { TaskLoaderService } from "@tasks/tasks.loader";
+import { S3Module } from "../s3/s3.module";
+import { MediaModule } from "../media/media.module";
 
 @Module({})
 export class AppModule implements NestModule {
@@ -20,6 +22,8 @@ export class AppModule implements NestModule {
     return {
       module: AppModule,
       imports: [
+        MediaModule,
+        S3Module,
         TasksModule.forRoot(tasksClasses, taskLoader),
         LoggerModule,
         JwtModule,
