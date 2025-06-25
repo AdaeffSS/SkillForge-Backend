@@ -4,7 +4,9 @@ import {
   Model,
   PrimaryKey,
   DataType,
+  HasMany
 } from "sequelize-typescript";
+import { Task } from "@tasks/entities/task.entity";
 
 @Table({
   tableName: "users",
@@ -37,4 +39,7 @@ export class User extends Model {
     allowNull: true,
   })
   declare username: string;
+
+  @HasMany(() => Task)
+  declare tasks: Task[];
 }

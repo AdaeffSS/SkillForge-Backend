@@ -17,7 +17,7 @@ export abstract class BaseTask {
     protected readonly taskLoader: TaskLoaderService,
   ) {}
 
-  async createTask(random: RandomProvider): Promise<{ id: string, body: string }> {
+  async createTask(random: RandomProvider, userId: string): Promise<{ id: string, body: string }> {
     const constructor = this.constructor as any;
 
     const exam = Reflect.getMetadata("exam", constructor);
@@ -45,7 +45,8 @@ export abstract class BaseTask {
 
     const task = await Task.create({
       seed: String(seed),
-      answer: generatedParams.answer,
+      userId,
+      task: `${exam}.${subject}.${taskKey}`,
     });
 
     return { id: task.id, body: mustache.render(template, combinedParams) };

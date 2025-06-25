@@ -15,6 +15,7 @@ import { TasksModule } from "@tasks/tasks.module";
 import { TaskLoaderService } from "@tasks/tasks.loader";
 import { S3Module } from "../s3/s3.module";
 import { MediaModule } from "../media/media.module";
+import { Task } from "@tasks/entities/task.entity";
 
 @Module({})
 export class AppModule implements NestModule {
@@ -38,7 +39,7 @@ export class AppModule implements NestModule {
           username: process.env.DB_USER,
           password: process.env.DB_PASSWORD,
           database: process.env.DB_NAME,
-          models: [User, Otp],
+          models: [User, Otp, Task],
           autoLoadModels: true,
           synchronize: true,
           logging: (msg: string) => {

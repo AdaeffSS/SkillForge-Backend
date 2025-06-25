@@ -7,6 +7,7 @@ import { LoggerModule } from "../logger/logger.module";
 import { Logger } from "../logger/logger.service";
 import { SequelizeModule } from "@nestjs/sequelize";
 import { Task } from "@tasks/entities/task.entity";
+import { User } from "../users/entities/user.entity";
 
 @Module({})
 export class TasksModule {
@@ -16,7 +17,7 @@ export class TasksModule {
   ): DynamicModule {
     return {
       module: TasksModule,
-      imports: [LoggerModule, SequelizeModule.forFeature([Task])],
+      imports: [LoggerModule, SequelizeModule.forFeature([Task, User])],
       controllers: [TasksController],
       providers: [
         ...tasksClasses,

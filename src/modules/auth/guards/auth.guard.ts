@@ -12,8 +12,6 @@ export class JwtAuthGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest();
 
-    console.log('g', request.headers);
-
     if (!request.user) {
       throw new UnauthorizedException("The user is not authorized");
     }
