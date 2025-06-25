@@ -41,7 +41,7 @@ export abstract class BaseTask {
       throw new HttpException("Template not found.", 500);
     }
 
-    const task = await Task.create({ seed: String(generatedParams.seed), answer: generatedParams.removedWord });
+    const task = await Task.create({ seed: String(generatedParams.seed), answer: generatedParams.answer });
 
     return `${mustache.render(template, combinedParams)} (Сид: ${generatedParams.seed}) (ID: ${task.id})`;
   }

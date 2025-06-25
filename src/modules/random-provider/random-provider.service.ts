@@ -19,9 +19,15 @@ export class RandomProvider {
     return Math.floor(this.next() * (max - min + 1)) + min;
   }
 
-  pick<T>(arr: T[]): T {
-    if (!arr.length) throw new Error("Cannot pick from empty array");
-    return arr[this.nextInt(0, arr.length - 1)];
+  pick<T>(input: T[]): T;
+  pick(input: string): string;
+  pick<T>(input: T[] | string): T | string {
+    if (!input.length) {
+      throw new Error("Cannot pick from empty array or string");
+    }
+
+    const index = this.nextInt(0, input.length - 1);
+    return input[index];
   }
 
   getRandomName(gender?: "male" | "female"): string {

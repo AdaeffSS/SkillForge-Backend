@@ -120,7 +120,7 @@ export class Task extends BaseTask {
         this.random.pick(params.termin.byLength.l8),
       depends: { termin: "termin" },
     },
-    removedWord: {
+    answer: {
       creator: (params: any): any =>
         this.random.pick([
           params.word3,
@@ -141,8 +141,8 @@ export class Task extends BaseTask {
     },
 
     delta: {
-      creator: (params: any): any => (params.removedWord.length + 2) * params.encodingWeight,
-      depends: { removedWord : "removedWord", encodingWeight: "encodingWeight" },
+      creator: (params: any): any => (params.answer.length + 2) * params.encodingWeight,
+      depends: { answer : "answer", encodingWeight: "encodingWeight" },
     },
 
     deltaUnitText: {
