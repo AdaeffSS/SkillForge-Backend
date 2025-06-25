@@ -17,13 +17,12 @@ export abstract class BaseTask {
     protected readonly taskLoader: TaskLoaderService,
   ) {}
 
-  async createTask(): Promise<string> {
+  async createTask(random: RandomProvider): Promise<{ id: string, body: string }> {
     const constructor = this.constructor as any;
 
     const exam = Reflect.getMetadata("exam", constructor);
     const subject = Reflect.getMetadata("subject", constructor);
     const taskKey = Reflect.getMetadata("taskKey", constructor);
-    const random = new RandomProvider();
 
     if (!exam || !subject || !taskKey) {
       throw new HttpException("Task metadata not found", 500);
@@ -32,8 +31,9 @@ export abstract class BaseTask {
     this.random = random;
     this.parameters = this.taskLoader.getParameters(exam, subject, taskKey);
 
-
-    const generatedParams = await this.paramsGenerator.generateParams(this.paramsSchema);
+    const generatedParams = await this.paramsGenerator.generateParams(
+      this.paramsSchema,
+    );
     const combinedParams = { ...this.parameters, ...generatedParams };
 
     const template = this.taskLoader.getTemplate(exam, subject, taskKey);
@@ -41,8 +41,13 @@ export abstract class BaseTask {
       throw new HttpException("Template not found.", 500);
     }
 
-    const task = await Task.create({ seed: String(generatedParams.seed), answer: generatedParams.answer });
+    const seed = random.getSeed();
 
-    return `${mustache.render(template, combinedParams)} (Сид: ${generatedParams.seed}) (ID: ${task.id})`;
+    const task = await Task.create({
+      seed: String(seed),
+      answer: generatedParams.answer,
+    });
+
+    return { id: task.id, body: mustache.render(template, combinedParams) };
   }
 }

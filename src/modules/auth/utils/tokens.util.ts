@@ -11,7 +11,6 @@ export class TokensUtils {
   ) {}
 
   async generateAccessToken(payload: object): Promise<string> {
-
     return await this.jwtService.signAsync(payload, {
       secret: this.configService.get<string>("JWT_ACCESS_SECRET"),
       expiresIn:
@@ -37,22 +36,14 @@ export class TokensUtils {
   }
 
   async validateAccessToken(token: string | null): Promise<JwtPayload | null> {
-    try {
-      return await this.jwtService.verifyAsync(token || "", {
-        secret: this.configService.get<string>("JWT_ACCESS_SECRET"),
-      });
-    } catch (e) {
-      return null;
-    }
+    return await this.jwtService.verifyAsync(token || "", {
+      secret: this.configService.get<string>("JWT_ACCESS_SECRET"),
+    });
   }
 
   async validateRefreshToken(token: string | null): Promise<JwtPayload | null> {
-    try {
-      return await this.jwtService.verifyAsync(token || "", {
-        secret: this.configService.get<string>("JWT_REFRESH_SECRET"),
-      });
-    } catch (e) {
-      return null;
-    }
+    return await this.jwtService.verifyAsync(token || "", {
+      secret: this.configService.get<string>("JWT_REFRESH_SECRET"),
+    });
   }
 }

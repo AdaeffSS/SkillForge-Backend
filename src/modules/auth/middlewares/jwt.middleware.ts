@@ -1,7 +1,6 @@
 import {
   Injectable,
   NestMiddleware,
-  UnauthorizedException,
 } from "@nestjs/common";
 import { Request, Response, NextFunction } from "express";
 import { TokensUtils } from "../utils/tokens.util";
@@ -28,9 +27,10 @@ export class JwtDecodeMiddleware implements NestMiddleware {
           if (!payload) {
             throw new Error("Payload is empty");
           }
+          const { exp, iat, ...cleanPayload } = payload
           const newAccessToken =
-            await this.tokensUtils.generateAccessToken(payload);
-          res.setHeader("Authorization", `Bearer ${newAccessToken}`);
+            await this.tokensUtils.generateAccessToken(cleanPayload);
+          res.setHeader("authorization", `Bearer ${newAccessToken}`);
           req.user = payload;
         } catch (err) {}
       }
@@ -40,14 +40,11 @@ export class JwtDecodeMiddleware implements NestMiddleware {
   }
 
   private extractTokenFromHeader(request: Request): string | null {
-    const authHeader = request.headers["Authorization"];
+    const authHeader = request.headers["authorization"];
     if (!authHeader) return null;
-    if (typeof authHeader === "string") {
-      const parts = authHeader.split(" ");
-      if (parts.length !== 2 || parts[0] !== "Bearer") return null;
-      return parts[1];
-    }
-    throw new UnauthorizedException();
+    const parts = authHeader.split(" ");
+    if (parts.length !== 2 || parts[0] !== "Bearer") return null;
+    return parts[1];
   }
   private extractTokenFromCookieOrHeader(request: Request): string | null {
     return request.cookies?.refreshToken ?? null;

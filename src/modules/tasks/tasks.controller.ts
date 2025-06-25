@@ -1,22 +1,24 @@
-import { Controller, Get, Query, Res } from "@nestjs/common";
-import { createWriteStream } from 'fs';
+import { Controller, Get, Query, UseGuards } from "@nestjs/common";
 import { TasksManager } from "./tasks.manager";
 import { Exam, Sub } from "./enums";
-import { writeFileSync } from 'fs';
-import { join } from 'path';
-import { v4 as uuidv4 } from 'uuid';
+import { RandomProvider } from "../random-provider/random-provider.service";
+import { JwtAuthGuard } from "../auth/guards/auth.guard";
 
 @Controller("tasks")
 export class TasksController {
   constructor(private readonly taskManager: TasksManager) {
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get()
   async getTask(
     @Query('exam') exam: Exam,
     @Query('subject') subject: Sub,
-    @Query('task') task: string
+    @Query('task') task: string,
+    @Query('seed') seed?: number,
   ) {
-    return this.taskManager.getTask(exam, subject, task).createTask()
+    const random = new RandomProvider(seed);
+    const taskInstance = this.taskManager.getTask(exam, subject, task, random);
+    return taskInstance.createTask(random);
   }
 }
