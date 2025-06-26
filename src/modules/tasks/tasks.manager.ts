@@ -45,7 +45,6 @@ export class TasksManager implements OnModuleInit {
     }
 
     const task_type = random.pick(matchingKeys)
-    console.log(task_type)
 
     return this.registry.get(task_type)!;
   }

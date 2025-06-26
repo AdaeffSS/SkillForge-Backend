@@ -2,7 +2,7 @@ import { ParamsGeneratorService } from "../params-generator/params-generator.ser
 import { HttpException, Injectable } from "@nestjs/common";
 import mustache from "mustache";
 import { TaskLoaderService } from "./tasks.loader";
-import 'reflect-metadata'
+import "reflect-metadata";
 import { Task } from "@tasks/entities/task.entity";
 import { RandomProvider } from "../random-provider/random-provider.service";
 
@@ -17,7 +17,10 @@ export abstract class BaseTask {
     protected readonly taskLoader: TaskLoaderService,
   ) {}
 
-  async createTask(random: RandomProvider, userId: string): Promise<{ id: string, body: string }> {
+  async createTask(
+    random: RandomProvider,
+    userId: string,
+  ): Promise<{ id: string; body: string }> {
     const constructor = this.constructor as any;
 
     const exam = Reflect.getMetadata("exam", constructor);
@@ -50,5 +53,35 @@ export abstract class BaseTask {
     });
 
     return { id: task.id, body: mustache.render(template, combinedParams) };
+  }
+
+  protected async regenerateParams(
+    random: RandomProvider,
+  ): Promise<Record<string, any>> {
+    const constructor = this.constructor as any;
+    const exam = Reflect.getMetadata("exam", constructor);
+    const subject = Reflect.getMetadata("subject", constructor);
+    const taskKey = Reflect.getMetadata("taskKey", constructor);
+
+    this.random = random;
+    this.parameters = this.taskLoader.getParameters(exam, subject, taskKey);
+
+    const generatedParams = await this.paramsGenerator.generateParams(
+      this.paramsSchema,
+    );
+    return { ...generatedParams };
+  }
+
+  async checkAnswer(random: RandomProvider, userAnswer: string): Promise<{ status: string }> {
+    const combinedParams = await this.regenerateParams(random);
+
+    if (!("answer" in combinedParams)) {
+      throw new Error("Answer field not found in generated parameters.");
+    }
+
+    const expected = String(combinedParams.answer).trim();
+    const actual = String(userAnswer).trim();
+
+    return { status: expected.toLowerCase() === actual.toLowerCase() ? 'success' : 'incorrect' };
   }
 }

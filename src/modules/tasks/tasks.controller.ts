@@ -1,4 +1,14 @@
-import { Controller, Get, Query, Req, UseGuards } from "@nestjs/common";
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Post,
+  Query,
+  Req,
+  UseGuards,
+} from "@nestjs/common";
 import { Request } from "express";
 import { TasksManager } from "./tasks.manager";
 import { Exam, Sub } from "./enums";
@@ -23,4 +33,22 @@ export class TasksController {
     const taskInstance = this.taskManager.getTask(exam, subject, task, random);
     return taskInstance.createTask(random, req!.user.sub);
   }
+
+  @HttpCode(200)
+  @UseGuards(JwtAuthGuard)
+  @Post()
+  async checkTask(
+    @Body('exam') exam: Exam,
+    @Body('subject') subject: Sub,
+    @Body('task') task: string,
+    @Body('answer') answer: string,
+    @Body('seed') seed: number,
+    @Req() req?: Request
+  ) {
+    if (!seed || !answer || !task || !subject || !exam) throw new BadRequestException('The fields are incorrectly filled. Repeat the attempt')
+    const random = new RandomProvider(seed);
+    const taskInstance = this.taskManager.getTask(exam, subject, task, random);
+    return taskInstance.checkAnswer(random, answer)
+  }
+
 }
