@@ -23,16 +23,6 @@ export class UploadController {
     return { message: `Файл '${dto.filename}' успешно загружен` };
   }
 
-  // @Get('download')
-  // async downloadFile(@Query('filename') filename: string): Promise<string> {
-  //   const stream = await this.s3.download(filename);
-  //   const chunks: Uint8Array[] = [];
-  //   for await (const chunk of stream) {
-  //     chunks.push(chunk);
-  //   }
-  //   return Buffer.concat(chunks).toString('utf-8');
-  // }
-
   @Delete('delete')
   async deleteFile(@Query('filename') filename: string): Promise<{ message: string }> {
     await this.s3.delete(filename);

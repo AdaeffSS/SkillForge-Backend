@@ -14,41 +14,35 @@ import { TasksManager } from "./tasks.manager";
 import { Exam, Sub } from "./enums";
 import { RandomProvider } from "../random-provider/random-provider.service";
 import { JwtAuthGuard } from "../auth/guards/auth.guard";
+import { TasksService } from "./tasks.service";
 
 @Controller("tasks")
 export class TasksController {
-  constructor(private readonly taskManager: TasksManager) {
-  }
+  constructor(
+    private readonly taskManager: TasksManager,
+    private readonly tasksService: TasksService,
+  ) {}
 
   @UseGuards(JwtAuthGuard)
   @Get()
   async getTask(
-    @Query('exam') exam: Exam,
-    @Query('subject') subject: Sub,
-    @Query('task') task: string,
-    @Query('seed') seed?: number,
-    @Req() req?: Request
+    @Query("exam") exam: Exam,
+    @Query("subject") subject: Sub,
+    @Query("task") task: string,
+    @Query("seed") seed?: number,
+    @Req() req?: Request,
   ) {
-    const random = new RandomProvider(seed);
-    const taskInstance = this.taskManager.getTask(exam, subject, task, random);
-    return taskInstance.createTask(random, req!.user.sub);
+    return this.tasksService.getTask(exam, subject, task, seed, req);
   }
 
   @HttpCode(200)
   @UseGuards(JwtAuthGuard)
   @Post()
   async checkTask(
-    @Body('exam') exam: Exam,
-    @Body('subject') subject: Sub,
-    @Body('task') task: string,
-    @Body('answer') answer: string,
-    @Body('seed') seed: number,
-    @Req() req?: Request
+    @Body("task") task: string,
+    @Body("answer") answer: string,
+    @Req() req: Request,
   ) {
-    if (!seed || !answer || !task || !subject || !exam) throw new BadRequestException('The fields are incorrectly filled. Repeat the attempt')
-    const random = new RandomProvider(seed);
-    const taskInstance = this.taskManager.getTask(exam, subject, task, random);
-    return taskInstance.checkAnswer(random, answer)
+    return await this.tasksService.answerTask(task, answer, req);
   }
-
 }

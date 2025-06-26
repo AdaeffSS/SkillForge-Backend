@@ -8,6 +8,7 @@ import { Logger } from "../logger/logger.service";
 import { SequelizeModule } from "@nestjs/sequelize";
 import { Task } from "@tasks/entities/task.entity";
 import { User } from "../users/entities/user.entity";
+import { TasksService } from "@tasks/tasks.service";
 
 @Module({})
 export class TasksModule {
@@ -21,6 +22,7 @@ export class TasksModule {
       controllers: [TasksController],
       providers: [
         ...tasksClasses,
+        TasksService,
         ParamsGeneratorService,
         Logger,
         TasksManager,
