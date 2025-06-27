@@ -25,9 +25,5 @@ export class Task extends BaseTask {
       depends: {},
     },
 
-    answer: {
-      creator: (params: any): any => 5,
-      depends: {},
-    },
   };
 }

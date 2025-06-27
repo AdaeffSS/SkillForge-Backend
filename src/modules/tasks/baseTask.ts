@@ -76,7 +76,7 @@ export abstract class BaseTask {
     const combinedParams = await this.regenerateParams(random);
 
     if (!("answer" in combinedParams)) {
-      throw new Error("Answer field not found in generated parameters.");
+      throw new Error("Answer not found in taskCreator.");
     }
 
     const expected = String(combinedParams.answer).trim();
