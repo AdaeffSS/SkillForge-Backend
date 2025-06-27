@@ -13,7 +13,6 @@ import { Request } from "express";
 import { TasksManager } from "./tasks.manager";
 import { Exam, Sub } from "./enums";
 import { RandomProvider } from "../random-provider/random-provider.service";
-import { JwtAuthGuard } from "../auth/guards/auth.guard";
 import { TasksService } from "./tasks.service";
 
 @Controller("tasks")
@@ -23,7 +22,6 @@ export class TasksController {
     private readonly tasksService: TasksService,
   ) {}
 
-  @UseGuards(JwtAuthGuard)
   @Get()
   async getTask(
     @Query("exam") exam: Exam,
@@ -36,7 +34,6 @@ export class TasksController {
   }
 
   @HttpCode(200)
-  @UseGuards(JwtAuthGuard)
   @Post()
   async checkTask(
     @Body("task") task: string,

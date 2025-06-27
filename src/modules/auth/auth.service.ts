@@ -28,7 +28,7 @@ export class AuthService {
     return { message: "Звонок отправлен. Введите 4 последние цифры номера" };
   }
 
-  async verifyCode(phoneNumber: string, code: string, res: Response) {
+  async verifyCode(phoneNumber: string, code: string) {
     if (!phoneNumber || !code) {
       throw new HttpException("Неверный запрос", 400);
     }
@@ -58,15 +58,8 @@ export class AuthService {
 
     await otp.destroy();
 
-    const { accessToken, refreshToken } = await this.tokensUtils.generateTokens(await this.usersService.loginByPhoneNumber(phoneNumber));
-
-    res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "strict",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-      path: "/",
-    });
-    res.setHeader("Authorization", `Bearer ${accessToken}`);
+    const user = await this.usersService.loginByPhoneNumber(phoneNumber)
+    const { accessToken, refreshToken } = await this.tokensUtils.generateTokens({ user });
+    return { accessToken, refreshToken, user };
   }
 }

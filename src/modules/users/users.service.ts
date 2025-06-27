@@ -21,9 +21,8 @@ export class UsersService {
       user = await this.createUser(phoneNumber);
     }
 
-    return {
-      sub: user.get("id", { plain: true }),
-      phone: user.get("phoneNumber", { plain: true }),
-    };
+    const { id, phoneNumber: phone, role, username } = user;
+
+    return { id, phoneNumber: phone, role, username };
   }
 }

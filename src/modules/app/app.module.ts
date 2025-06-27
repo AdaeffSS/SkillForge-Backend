@@ -8,7 +8,6 @@ import { Logger } from "../logger/logger.service";
 import * as process from "node:process";
 import { LoggerMiddleware } from "../logger/logger.middleware";
 import { LoggerModule } from "../logger/logger.module";
-import { JwtDecodeMiddleware } from "../auth/middlewares/jwt.middleware";
 import { JwtModule } from "@nestjs/jwt";
 import { TokensUtils } from "../auth/utils/tokens.util";
 import { TasksModule } from "@tasks/tasks.module";
@@ -53,7 +52,9 @@ export class AppModule implements NestModule {
     };
   }
 
-  configure(consumer: MiddlewareConsumer) {
-    consumer.apply(JwtDecodeMiddleware, LoggerMiddleware).forRoutes("{*path}");
-  }
+  configure() {}
+
+  // configure(consumer: MiddlewareConsumer) {
+  //   consumer.apply(JwtDecodeMiddleware, LoggerMiddleware).forRoutes("{*path}");
+  // }
 }
