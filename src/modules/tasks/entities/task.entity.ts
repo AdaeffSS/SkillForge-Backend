@@ -9,9 +9,13 @@ import {
 } from "sequelize-typescript";
 import { User } from "../../users/entities/user.entity";
 
+export enum TaskStatus {
+  ISSUED = 'issued',
+  SOLVED = 'solved'
+}
+
 @Table({
   tableName: "tasks",
-  timestamps: true,
 })
 export class Task extends Model {
   @PrimaryKey
@@ -33,6 +37,33 @@ export class Task extends Model {
     allowNull: false,
   })
   declare seed: string;
+
+  @Column({
+    type: DataType.ENUM('issued', 'solved'),
+    allowNull: false,
+    defaultValue: 'issued',
+  })
+  declare status: TaskStatus;
+
+  @Column({
+    type: DataType.DATE,
+    allowNull: false,
+    defaultValue: DataType.NOW,
+  })
+  declare issuedAt: Date;
+
+  @Column({
+    type: DataType.DATE,
+    allowNull: true,
+  })
+  declare solvedAt: Date;
+
+  @Column({
+    type: DataType.INTEGER,
+    allowNull: false,
+    defaultValue: 0,
+  })
+  declare attempts: number;
 
   @ForeignKey(() => User)
   @Column({

@@ -1,18 +1,15 @@
 import {
-  BadRequestException,
+  BadRequestException, ConflictException,
   ForbiddenException,
-  Injectable, InternalServerErrorException,
+  Injectable,
+  InternalServerErrorException,
   NotFoundException,
-  Query,
-  Req
 } from "@nestjs/common";
 import { Exam, Sub } from "@tasks/enums";
 import { Request } from "express";
 import { RandomProvider } from "../random-provider/random-provider.service";
 import { TasksManager } from "./tasks.manager";
-import { BaseTask } from "@tasks/baseTask";
-import { Task } from "@tasks/entities/task.entity";
-import { Sequelize } from "sequelize";
+import { Task, TaskStatus } from "@tasks/entities/task.entity";
 
 @Injectable()
 export class TasksService {
@@ -33,7 +30,7 @@ export class TasksService {
   async answerTask(taskId: string, answer: string, req: Request): Promise<any> {
     if (!taskId || !answer || !req?.user?.sub) {
       throw new BadRequestException(
-        "The fields are incorrectly filled. Repeat the attempt."
+        "The fields are incorrectly filled. Repeat the attempt.",
       );
     }
 
@@ -54,15 +51,18 @@ export class TasksService {
 
     if (taskFromDb.userId !== req.user.sub) {
       throw new ForbiddenException(
-        `This task exists, but was issued to another user.`
+        `This task exists, but was issued to another user.`,
       );
     }
+
+    if (taskFromDb.status == TaskStatus.SOLVED)
+      throw new ConflictException("The task has already been solved");
 
     const [exam, subject, task] = taskFromDb.task.split(".");
 
     if (!exam || !subject || !task) {
       throw new BadRequestException(
-        `Invalid task identifier format: "${taskFromDb.task}"`
+        `Invalid task identifier format: "${taskFromDb.task}"`,
       );
     }
 
@@ -73,17 +73,29 @@ export class TasksService {
         exam as Exam,
         subject as Sub,
         task,
-        random
+        random,
       );
 
-      return taskInstance.checkAnswer(random, answer);
+      const result = await taskInstance.checkAnswer(random, answer);
+      taskFromDb.attempts += 1;
+
+      if (result.status == "success") {
+        taskFromDb.status = TaskStatus.SOLVED;
+        taskFromDb.solvedAt = new Date();
+      }
+      await taskFromDb.save();
+      return { ...result, attempts: taskFromDb.attempts };
     } catch (err) {
-      if (err instanceof BadRequestException || err instanceof ForbiddenException) {
+      if (
+        err instanceof BadRequestException ||
+        err instanceof ForbiddenException
+      ) {
         throw err;
       }
 
-      throw new InternalServerErrorException("Task execution failed", { cause: err });
+      throw new InternalServerErrorException("Task execution failed", {
+        cause: err,
+      });
     }
   }
-
 }
