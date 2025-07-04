@@ -18,7 +18,10 @@ async function bootstrap () {
   });
   app.useGlobalPipes(new ValidationPipe());
   app.setGlobalPrefix('/api/v1/')
-  app.enableCors()
+  app.enableCors({
+    credentials: true,
+    origin: 'http://localhost:3000',
+  })
   app.use(cookieParser())
 
   app.useLogger(logger)

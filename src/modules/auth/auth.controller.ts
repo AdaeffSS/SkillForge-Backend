@@ -29,16 +29,12 @@ export class AuthController {
     );
 
     res.cookie('accessToken', accessToken, {
-      httpOnly: true,
-      sameSite: 'strict',
       maxAge: 15 * 60 * 1000,
       path: '/',
     });
 
 
     res.cookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      sameSite: 'strict',
       maxAge: 7 * 24 * 60 * 60 * 1000,
       path: '/',
     });
@@ -54,24 +50,14 @@ export class AuthController {
       throw new UnauthorizedException('Refresh token is required');
     }
 
-    const tokens = await this.tokensUtils.updateTokens(refreshToken);
-    if (!tokens) { throw new UnauthorizedException('Failed to refresh tokens'); }
-    const { accessToken, refreshToken: newRefreshToken } = tokens
+    const accessToken = await this.tokensUtils.updateAccess(refreshToken);
+    if (!accessToken) { throw new UnauthorizedException('Failed to refresh access token'); }
 
     res.cookie('accessToken', accessToken, {
-      httpOnly: true,
-      sameSite: 'strict',
       maxAge: 15 * 60 * 1000,
       path: '/',
     });
 
-    res.cookie('refreshToken', newRefreshToken, {
-      httpOnly: true,
-      sameSite: 'strict',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-      path: '/',
-    });
-
-    return { message: 'Tokens refreshed' };
+    return { message: 'Access token refreshed' };
   }
 }

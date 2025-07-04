@@ -15,6 +15,7 @@ import { TaskLoaderService } from "@tasks/tasks.loader";
 import { S3Module } from "../s3/s3.module";
 import { MediaModule } from "../media/media.module";
 import { Task } from "@tasks/entities/task.entity";
+import { JwtDecodeMiddleware } from "../auth/middlewares/jwt.middleware";
 
 @Module({})
 export class AppModule implements NestModule {
@@ -52,9 +53,8 @@ export class AppModule implements NestModule {
     };
   }
 
-  configure() {}
 
-  // configure(consumer: MiddlewareConsumer) {
-  //   consumer.apply(JwtDecodeMiddleware, LoggerMiddleware).forRoutes("{*path}");
-  // }
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(JwtDecodeMiddleware, LoggerMiddleware).forRoutes("{*path}");
+  }
 }

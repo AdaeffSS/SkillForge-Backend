@@ -39,6 +39,7 @@ export class TasksService {
     try {
       taskFromDb = await Task.findByPk(taskId);
     } catch (err) {
+      if (err.status === 404) throw new NotFoundException('The task with such ID was not found')
       if (err.name === "SequelizeDatabaseError") {
         throw new BadRequestException("Invalid task ID format");
       }

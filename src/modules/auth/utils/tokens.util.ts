@@ -11,9 +11,9 @@ export class TokensUtils {
     private readonly configService: ConfigService,
   ) {}
 
-  async generateAccessToken(payload: object): Promise<string> {
+  async generateAccessToken(user: { id: string }): Promise<string> {
     return await this.jwtService.signAsync(
-      { sub: payload },
+      { sub: user.id },
       {
         secret: this.configService.get<string>("JWT_ACCESS_SECRET"),
         expiresIn:
@@ -23,36 +23,36 @@ export class TokensUtils {
   }
 
   async generateRefreshToken(payload: any): Promise<string> {
-    return await this.jwtService.signAsync({ sub: payload.id }, {
-      secret: this.configService.get<string>("JWT_REFRESH_SECRET"),
-      expiresIn:
-        this.configService.get<string>("JWT_REFRESH_EXPIRATION") || "7d",
-    });
+    return await this.jwtService.signAsync(
+      { sub: payload.id },
+      {
+        secret: this.configService.get<string>("JWT_REFRESH_SECRET"),
+        expiresIn:
+          this.configService.get<string>("JWT_REFRESH_EXPIRATION") || "7d",
+      },
+    );
   }
 
-  async generateTokens(
-    payload: object,
-  ): Promise<{ accessToken: string; refreshToken: string }> {
+  async generateTokens(payload: {
+    id: string;
+  }): Promise<{ accessToken: string; refreshToken: string }> {
     return {
       accessToken: await this.generateAccessToken(payload),
       refreshToken: await this.generateRefreshToken(payload),
     };
   }
 
-  async updateTokens(refreshToken: string) {
+  async updateAccess(refreshToken: string) {
     try {
       const payload = await this.validateRefreshToken(refreshToken);
       const user = await User.findByPk(payload!.sub, {
-        attributes: ['id', 'phoneNumber', 'role', 'username']
-      })
-      if (!user) { throw new NotFoundException("User not found"); }
-      const accessToken = await this.generateAccessToken(user);
-      const newRefreshToken = await this.generateRefreshToken(user);
-      console.log(accessToken, newRefreshToken);
-      return { accessToken, refreshToken: newRefreshToken };
-    } catch (error) {
-      console.error(error);
-    }
+        attributes: ["id", "phoneNumber", "role", "username"],
+      });
+      if (!user) {
+        throw new NotFoundException("User not found");
+      }
+      return await this.generateAccessToken(user);
+    } catch (error) {}
   }
 
   async validateAccessToken(token: string | null): Promise<JwtPayload | null> {

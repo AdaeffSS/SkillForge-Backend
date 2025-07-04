@@ -34,10 +34,9 @@ export abstract class BaseTask {
     this.random = random;
     this.parameters = this.taskLoader.getParameters(exam, subject, taskKey);
 
-    const generatedParams = await this.paramsGenerator.generateParams(
+    const combinedParams = await this.paramsGenerator.generateParams(
       this.paramsSchema,
     );
-    const combinedParams = { ...this.parameters, ...generatedParams };
 
     const template = this.taskLoader.getTemplate(exam, subject, taskKey);
     if (!template) {
@@ -81,6 +80,10 @@ export abstract class BaseTask {
 
     const expected = String(combinedParams.answer).trim();
     const actual = String(userAnswer).trim();
+
+    console.log(combinedParams);
+    console.log('chAns', random.getSeed());
+    console.log(expected, actual);
 
     return { status: expected.toLowerCase() === actual.toLowerCase() ? 'success' : 'incorrect' };
   }

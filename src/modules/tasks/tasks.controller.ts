@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   Body,
   Controller,
   Get,
@@ -12,9 +11,10 @@ import {
 import { Request } from "express";
 import { TasksManager } from "./tasks.manager";
 import { Exam, Sub } from "./enums";
-import { RandomProvider } from "../random-provider/random-provider.service";
 import { TasksService } from "./tasks.service";
+import { JwtAuthGuard } from "modules/auth/guards/auth.guard";
 
+@UseGuards(JwtAuthGuard)
 @Controller("tasks")
 export class TasksController {
   constructor(

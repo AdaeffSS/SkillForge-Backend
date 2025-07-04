@@ -35,6 +35,7 @@ export class TasksManager implements OnModuleInit {
 
     const exactTask = this.registry.get(compositeKey);
     if (exactTask) {
+      random.next();
       return exactTask;
     }
 

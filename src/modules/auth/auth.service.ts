@@ -20,7 +20,7 @@ export class AuthService {
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
 
     await this.otpModel.create({
-      phoneNumber,
+      phoneNumber: phoneNumber.replace(/\D/g, ""),
       code,
       expiresAt,
     });
@@ -32,6 +32,8 @@ export class AuthService {
     if (!phoneNumber || !code) {
       throw new HttpException("Неверный запрос", 400);
     }
+
+    phoneNumber = phoneNumber.replace(/\D/g, "");
 
     const otp = await this.otpModel.findOne({
       where: { phoneNumber },
@@ -46,9 +48,15 @@ export class AuthService {
     await otp.save();
 
     if (otp.code != code) {
-      throw new HttpException(`Код неверный. У тебя еще ${3-otp.attempts} попытки`, HttpStatus.UNAUTHORIZED);
+      throw new HttpException(
+        `Код неверный. У тебя еще ${3 - otp.attempts} попытки`,
+        HttpStatus.UNAUTHORIZED,
+      );
     } else if (otp.expiresAt < new Date()) {
-      throw new HttpException("Срок действия когда истек. Запроси код заново", HttpStatus.GONE);
+      throw new HttpException(
+        "Срок действия когда истек. Запроси код заново",
+        HttpStatus.GONE,
+      );
     } else if (otp.attempts > 3) {
       throw new HttpException(
         "Превышено количество попыток ввода кода",
@@ -58,8 +66,9 @@ export class AuthService {
 
     await otp.destroy();
 
-    const user = await this.usersService.loginByPhoneNumber(phoneNumber)
-    const { accessToken, refreshToken } = await this.tokensUtils.generateTokens({ user });
+    const user = await this.usersService.loginByPhoneNumber(phoneNumber);
+    const { accessToken, refreshToken } =
+      await this.tokensUtils.generateTokens(user);
     return { accessToken, refreshToken, user };
   }
 }
