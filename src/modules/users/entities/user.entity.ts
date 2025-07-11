@@ -7,6 +7,7 @@ import {
   HasMany
 } from "sequelize-typescript";
 import { Task } from "@tasks/entities/task.entity";
+import { Session } from "../../sessions/entities/session.entity";
 
 @Table({
   tableName: "users",
@@ -40,6 +41,6 @@ export class User extends Model {
   })
   declare username: string;
 
-  @HasMany(() => Task)
-  declare tasks: Task[];
+  @HasMany(() => Session)
+  declare sessions: Session[];
 }

@@ -4,7 +4,6 @@ import { ConfigModule } from "@nestjs/config";
 import { User } from "../users/entities/user.entity";
 import { Otp } from "../auth/entites/otp.entity";
 import { AuthModule } from "../auth/auth.module";
-import { Logger } from "../logger/logger.service";
 import * as process from "node:process";
 import { LoggerMiddleware } from "../logger/logger.middleware";
 import { LoggerModule } from "../logger/logger.module";
@@ -16,6 +15,12 @@ import { S3Module } from "../s3/s3.module";
 import { MediaModule } from "../media/media.module";
 import { Task } from "@tasks/entities/task.entity";
 import { JwtDecodeMiddleware } from "../auth/middlewares/jwt.middleware";
+import { SessionsModule } from "../sessions/sessions.module";
+import { Session } from "modules/sessions/entities/session.entity";
+import { SessionEvent } from "../sessions/entities/session-event.entity";
+import { SessionConfiguration } from "../sessions/entities/session-configuration.entity";
+import { Logger } from "../logger/logger.service";
+import { TrainSession } from "../sessions/entities/train-session.entity";
 
 @Module({})
 export class AppModule implements NestModule {
@@ -23,6 +28,7 @@ export class AppModule implements NestModule {
     return {
       module: AppModule,
       imports: [
+        SessionsModule,
         MediaModule,
         S3Module,
         TasksModule.forRoot(tasksClasses, taskLoader),
@@ -39,7 +45,7 @@ export class AppModule implements NestModule {
           username: process.env.DB_USER,
           password: process.env.DB_PASSWORD,
           database: process.env.DB_NAME,
-          models: [User, Otp, Task],
+          models: [User, Otp, Task, Session, SessionEvent, TrainSession, SessionConfiguration],
           autoLoadModels: true,
           synchronize: true,
           logging: (msg: string) => {

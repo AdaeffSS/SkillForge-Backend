@@ -8,23 +8,27 @@ import {
   BelongsTo,
 } from "sequelize-typescript";
 import { User } from "../../users/entities/user.entity";
+import { Session } from "../../sessions/entities/session.entity";
 
 export enum TaskStatus {
   ISSUED = 'issued',
-  SOLVED = 'solved'
+  SOLVED = 'solved',
+  INCORRECT = 'incorrect'
 }
 
 @Table({
   tableName: "tasks",
+  timestamps: false,
 })
 export class Task extends Model {
+
   @PrimaryKey
   @Column({
-    type: DataType.UUID,
-    defaultValue: DataType.UUIDV4,
+    type: DataType.INTEGER,
+    autoIncrement: true,
     unique: true,
   })
-  declare id: string;
+  declare id: number;
 
   @Column({
     type: DataType.STRING,
@@ -33,13 +37,7 @@ export class Task extends Model {
   declare task: string;
 
   @Column({
-    type: DataType.STRING,
-    allowNull: false,
-  })
-  declare seed: string;
-
-  @Column({
-    type: DataType.ENUM('issued', 'solved'),
+    type: DataType.ENUM(...Object.values(TaskStatus)),
     allowNull: false,
     defaultValue: 'issued',
   })
@@ -65,13 +63,13 @@ export class Task extends Model {
   })
   declare attempts: number;
 
-  @ForeignKey(() => User)
+  @ForeignKey(() => Session)
   @Column({
-    type: DataType.UUID,
-    allowNull: false,
+    type: DataType.INTEGER,
+    allowNull: true,
   })
-  declare userId: string;
+  declare sessionId: number;
 
-  @BelongsTo(() => User)
-  declare user: User
+  @BelongsTo(() => Session)
+  declare session: Session
 }

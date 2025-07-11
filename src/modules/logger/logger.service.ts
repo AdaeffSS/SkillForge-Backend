@@ -81,11 +81,14 @@ export class Logger implements BaseLogger {
   }
 
   error(message: string, trace?: string, context?: string): void {
-    this.logger.error(message, {
-      trace,
-      service: context ? this.formatContext(context) : this.context,
+    const ctx = context ? this.formatContext(context) : this.context;
+    const msgWithTrace = trace ? `${message}\nTrace: ${trace}` : message;
+
+    this.logger.error(msgWithTrace, {
+      service: ctx,
     });
   }
+
 
   warn(message: string, context?: string): void {
     this.logger.warn(message, {

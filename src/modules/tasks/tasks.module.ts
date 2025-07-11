@@ -9,6 +9,7 @@ import { SequelizeModule } from "@nestjs/sequelize";
 import { Task } from "@tasks/entities/task.entity";
 import { User } from "../users/entities/user.entity";
 import { TasksService } from "@tasks/tasks.service";
+import { Session } from "../sessions/entities/session.entity";
 
 @Module({})
 export class TasksModule {
@@ -18,7 +19,7 @@ export class TasksModule {
   ): DynamicModule {
     return {
       module: TasksModule,
-      imports: [LoggerModule, SequelizeModule.forFeature([Task, User])],
+      imports: [LoggerModule, SequelizeModule],
       controllers: [TasksController],
       providers: [
         ...tasksClasses,
@@ -31,7 +32,7 @@ export class TasksModule {
           useValue: taskLoader,
         },
       ],
-      exports: [...tasksClasses, TaskLoaderService],
+      exports: [...tasksClasses, TaskLoaderService, TasksService, TasksManager],
     };
   }
 }

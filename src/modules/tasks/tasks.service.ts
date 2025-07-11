@@ -15,16 +15,14 @@ import { Task, TaskStatus } from "@tasks/entities/task.entity";
 export class TasksService {
   constructor(private readonly tasksManager: TasksManager) {}
 
-  async getTask(
+  async generateTask(
     exam: Exam,
     subject: Sub,
     task: string,
-    seed: number | undefined,
-    req?: Request,
   ) {
-    const random = new RandomProvider(seed);
+    const random = new RandomProvider();
     const taskInstance = this.tasksManager.getTask(exam, subject, task, random);
-    return taskInstance.createTask(random, req!.user.sub);
+    return taskInstance.createTask(random);
   }
 
   async answerTask(taskId: string, answer: string, req: Request): Promise<any> {
@@ -50,12 +48,6 @@ export class TasksService {
       throw new NotFoundException(`Task with ID ${taskId} not found.`);
     }
 
-    if (taskFromDb.userId !== req.user.sub) {
-      throw new ForbiddenException(
-        `This task exists, but was issued to another user.`,
-      );
-    }
-
     if (taskFromDb.status == TaskStatus.SOLVED)
       throw new ConflictException("The task has already been solved");
 
@@ -67,7 +59,7 @@ export class TasksService {
       );
     }
 
-    const random = new RandomProvider(Number(taskFromDb.seed));
+    const random = new RandomProvider(Number(taskFromDb.id));
 
     try {
       const taskInstance = this.tasksManager.getTask(
@@ -80,7 +72,12 @@ export class TasksService {
       const result = await taskInstance.checkAnswer(random, answer);
       taskFromDb.attempts += 1;
 
-      if (result.status == "success") {
+      if (result.status == TaskStatus.INCORRECT && taskFromDb.status != TaskStatus.INCORRECT) {
+        taskFromDb.status = TaskStatus.INCORRECT;
+        taskFromDb.solvedAt = new Date();
+      }
+
+      if (result.status == TaskStatus.SOLVED) {
         taskFromDb.status = TaskStatus.SOLVED;
         taskFromDb.solvedAt = new Date();
       }

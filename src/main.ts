@@ -8,7 +8,6 @@ import { TaskLoaderService } from "@tasks/tasks.loader";
 
 async function bootstrap () {
   const logger = new Logger();
-  logger.setContext('Bootstrap');
 
   const taskLoader = new TaskLoaderService(logger);
   const tasksClasses = await taskLoader.importAllTasks();
@@ -24,10 +23,9 @@ async function bootstrap () {
   })
   app.use(cookieParser())
 
-  app.useLogger(logger)
-
   const port = process.env.PORT || 4000;
   await app.listen(port);
+  logger.setContext('Bootstrap');
   logger.log(chalk.greenBright.bgGreen.bold(` Server started on port ${port} `));
 }
 

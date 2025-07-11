@@ -3,7 +3,7 @@ import { HttpException, Injectable } from "@nestjs/common";
 import mustache from "mustache";
 import { TaskLoaderService } from "./tasks.loader";
 import "reflect-metadata";
-import { Task } from "@tasks/entities/task.entity";
+import { Task, TaskStatus } from "@tasks/entities/task.entity";
 import { RandomProvider } from "../random-provider/random-provider.service";
 
 @Injectable()
@@ -19,8 +19,8 @@ export abstract class BaseTask {
 
   async createTask(
     random: RandomProvider,
-    userId: string,
-  ): Promise<{ id: string; body: string }> {
+  ): Promise<{
+    task: any; body: string }> {
     const constructor = this.constructor as any;
 
     const exam = Reflect.getMetadata("exam", constructor);
@@ -47,11 +47,10 @@ export abstract class BaseTask {
 
     const task = await Task.create({
       seed: String(seed),
-      userId,
       task: `${exam}.${subject}.${taskKey}`,
     });
 
-    return { id: task.id, body: mustache.render(template, combinedParams) };
+    return { task: task, body: mustache.render(template, combinedParams) };
   }
 
   protected async regenerateParams(
@@ -85,6 +84,6 @@ export abstract class BaseTask {
     console.log('chAns', random.getSeed());
     console.log(expected, actual);
 
-    return { status: expected.toLowerCase() === actual.toLowerCase() ? 'success' : 'incorrect' };
+    return { status: expected.toLowerCase() === actual.toLowerCase() ? TaskStatus.SOLVED : TaskStatus.INCORRECT };
   }
 }
