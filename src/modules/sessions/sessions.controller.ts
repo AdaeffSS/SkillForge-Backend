@@ -12,7 +12,6 @@ import { JwtAuthGuard } from "../auth/guards/auth.guard";
 import { Request } from "express";
 import { CreateSessionDto } from "./dto/create-session.dto";
 import { RegisterEventDto } from "./dto/register-event.dto";
-import { Exam, Sub } from "@tasks/enums";
 
 @UseGuards(JwtAuthGuard)
 @Controller("sessions")
@@ -31,7 +30,7 @@ export class SessionsController {
   }
 
   @Put(':id/add-tasks')
-  async getTask(
+  async addTasks(
     @Param('id') sessionId: string,
     @Body() body: any,
     @Req() req: Request,

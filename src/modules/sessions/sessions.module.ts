@@ -11,9 +11,11 @@ import { TrainSession } from "./entities/train-session.entity";
 import { TasksModule } from "@tasks/tasks.module";
 import { TasksService } from "@tasks/tasks.service";
 import { TasksManager } from "@tasks/tasks.manager";
+import { LoggerModule } from "modules/logger/logger.module";
 
 @Module({
   imports: [
+    LoggerModule,
     TasksModule,
     SequelizeModule.forFeature([Session, SessionEvent, SessionConfiguration, TrainSession, User, Task]),
   ],

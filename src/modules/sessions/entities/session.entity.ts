@@ -47,6 +47,12 @@ export class Session extends Model {
   declare type: SessionType;
 
   @Column({
+    type: DataType.STRING,
+    allowNull: false,
+  })
+  declare code: string;
+
+  @Column({
     type: DataType.BOOLEAN,
     allowNull: false,
     defaultValue: false,

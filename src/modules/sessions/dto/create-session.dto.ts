@@ -8,8 +8,7 @@ export class CreateSessionDto {
   type: SessionType;
 
   @IsString()
-  @IsOptional()
-  taskCode: string;
+  code: string;
 
   @IsOptional()
   @IsDate()
@@ -17,7 +16,7 @@ export class CreateSessionDto {
 
   @IsOptional()
   @IsString()
-  configurationCode: string;
+  task: string;
 
   @IsOptional()
   @IsString()

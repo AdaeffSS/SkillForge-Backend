@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   ForbiddenException,
   Injectable,
@@ -12,25 +13,33 @@ import { EventType, SessionEvent } from "./entities/session-event.entity";
 import { TrainSession } from "./entities/train-session.entity";
 import { TasksService } from "@tasks/tasks.service";
 import { Exam, Sub } from "@tasks/enums";
+import { Logger } from "../logger/logger.service";
+import { SessionType } from "./unums/session-type.enum";
 
 @Injectable()
 export class SessionsService {
-  constructor(private readonly tasksService: TasksService) {}
+  constructor(
+    private readonly tasksService: TasksService,
+    private readonly logger: Logger,
+  ) {
+    logger.setContext(SessionsService.name);
+  }
 
   private createTrainSession(id: number, body: any): void {
     TrainSession.create({
       id: id,
-      difficultyLevel: 1,
+      task: body.task,
     }).then();
   }
   async createSession(body: CreateSessionDto, req: Request): Promise<any> {
     const session = await Session.create({
       userId: req.user.sub,
       type: body.type,
+      code: body.code,
       ...(body.name ? { name: body.name } : {}),
       ...(body.expireAt ? { expireAt: body.expireAt } : {}),
     });
-    this.createTrainSession(session.id, body);
+    if (body.type == SessionType.TRAIN) this.createTrainSession(session.id, body);
     this.registerEvent(
       {
         sessionId: session.id,
@@ -75,12 +84,27 @@ export class SessionsService {
 
   async addTasks(id: any, body: any, req: Request): Promise<any> {
     const session = await Session.findByPk(id);
+    if (!session)
+      throw new NotFoundException(`Session with id: ${id} does not exist`);
     if (session?.userId != req.user.sub)
-      throw new ForbiddenException(
-        "The session was created by another user. You do not have access to add tasks to this session",
-      );
+      throw new ForbiddenException({
+        message:
+          "The session was created by another user. You do not have access to add tasks to this session",
+        error: "TooManyTasks",
+      });
 
     let tasks: any[] = [];
+
+    const summa: number = body.reduce(
+      (sum: number, item: any) => sum + item.count,
+      0,
+    );
+
+    if (summa > 100)
+      throw new BadRequestException({
+        message: `Too big request (${summa} tasks). The simultaneous generation of more than 100 tasks is prohibited`,
+        error: "TooManyTasks",
+      });
 
     for (const item of body) {
       for (let i = 0; i < item.count; i++) {
@@ -91,9 +115,27 @@ export class SessionsService {
         );
         task.task.sessionId = id;
         task.task.save().then();
-        tasks.push({id: task.task.id, body: task.body})
+        this.logger.debug(
+          `Successfully generated task: ${task.task.id} in the request: ${req.requestId}`,
+        );
+        tasks.push({ id: task.task.id, body: task.body });
+        await this.registerEvent(
+          {
+            sessionId: id,
+            type: EventType.ADD_TASK,
+            context: {
+              taskId: task.task.id,
+            },
+          },
+          req,
+        ).then(() =>
+          this.logger.debug(
+            `Task ${task.task.id} added in session successfully (req: ${req.requestId})`,
+          ),
+        );
       }
     }
+    this.logger.log(`${tasks.length} tasks added to session ${id}`);
     return tasks;
   }
 }

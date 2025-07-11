@@ -51,7 +51,7 @@ export class AppModule implements NestModule {
           logging: (msg: string) => {
             const logger = new Logger();
             logger.setContext("Sequelize");
-            logger.log(msg);
+            logger.debug(msg);
           },
         }),
       ],

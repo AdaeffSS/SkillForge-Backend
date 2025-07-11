@@ -9,6 +9,7 @@ import {
 } from "sequelize-typescript";
 import { User } from "../../users/entities/user.entity";
 import { Session } from "../../sessions/entities/session.entity";
+import { Col } from "sequelize/lib/utils";
 
 export enum TaskStatus {
   ISSUED = 'issued',
@@ -35,6 +36,12 @@ export class Task extends Model {
     allowNull: false,
   })
   declare task: string;
+
+  @Column({
+    type: DataType.BIGINT,
+    allowNull: false,
+  })
+  declare seed: number;
 
   @Column({
     type: DataType.ENUM(...Object.values(TaskStatus)),

@@ -24,14 +24,22 @@ export class TrainSession extends Model {
   declare session: Session;
 
   @Column({
-    type: DataType.INTEGER,
+    type: DataType.STRING,
     allowNull: true,
   })
-  declare difficultyLevel: number;
+  declare task: string;
 
   @Column({
-    type: DataType.JSONB,
-    allowNull: true,
+    type: DataType.BOOLEAN,
+    allowNull: false,
+    defaultValue: true,
   })
-  declare extraData: Record<string, any>;
+  declare visibleHint: boolean
+
+  @Column({
+    type: DataType.BOOLEAN,
+    allowNull: false,
+    defaultValue: true,
+  })
+  declare visibleSolution: boolean
 }
