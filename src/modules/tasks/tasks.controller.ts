@@ -22,14 +22,15 @@ export class TasksController {
     private readonly tasksService: TasksService,
   ) {}
 
-  //
-  // @HttpCode(200)
-  // @Post()
-  // async checkTask(
-  //   @Body("task") task: string,
-  //   @Body("answer") answer: string,
-  //   @Req() req: Request,
-  // ) {
-  //   return await this.tasksService.answerTask(task, answer, req);
-  // }
+
+  @HttpCode(200)
+  @Post()
+  async checkTask(
+    @Body("task") task: string,
+    @Body("answer") answer: string,
+    @Body("sessionId") sessionId: number,
+    @Req() req: Request,
+  ) {
+    return await this.tasksService.answerTask(task, answer, sessionId, req);
+  }
 }

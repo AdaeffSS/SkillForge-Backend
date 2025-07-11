@@ -5,6 +5,7 @@ import { Session } from "./session.entity";
 export enum EventType {
   CREATE = 'create', START = 'start', CLOSE = 'close', AUTO_CLOSE = 'auto_close', INTERRUPT = 'interrupt', CONTINUE = 'continue',
   ADD_TASK = 'add_task', SKIP_TASK = 'skip_task', COPY_TASK_TEXT = 'copy_task_text', VIEW_HINT = 'view_hint', VIEW_SOLUTION = 'view_solution', SOLVE_CORRECTLY = 'solve_correctly', SOLVE_INCORRECTLY = 'solve_incorrectly',
+  SET_TASK_TYPE = 'set_task_type'
 }
 
 @Table({

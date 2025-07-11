@@ -25,11 +25,20 @@ export class SessionsService {
     logger.setContext(SessionsService.name);
   }
 
-  private createTrainSession(id: number, body: any): void {
+  private createTrainSession(id: number, body: any, req: Request): void {
     TrainSession.create({
       id: id,
       task: body.task,
     }).then();
+    if (body.task) {
+      this.registerEvent({
+        sessionId: id,
+        type: EventType.SET_TASK_TYPE,
+        context: {
+          taskType: body.task,
+        },
+      }, req).then()
+    }
   }
   async createSession(body: CreateSessionDto, req: Request): Promise<any> {
     const session = await Session.create({
@@ -39,14 +48,19 @@ export class SessionsService {
       ...(body.name ? { name: body.name } : {}),
       ...(body.expireAt ? { expireAt: body.expireAt } : {}),
     });
-    if (body.type == SessionType.TRAIN) this.createTrainSession(session.id, body);
     this.registerEvent(
       {
         sessionId: session.id,
         type: EventType.CREATE,
+        context: {
+          sessionId: session.id,
+          sessionType: session.type
+        }
       },
       req,
     ).then();
+    if (body.type == SessionType.TRAIN)
+      this.createTrainSession(session.id, body, req);
     return `/sessions/${session.id}`;
   }
   async registerEvent(event: RegisterEventDto, req: Request) {
@@ -83,7 +97,9 @@ export class SessionsService {
   }
 
   async addTasks(id: any, body: any, req: Request): Promise<any> {
-    const session = await Session.findByPk(id);
+    const session = await Session.findByPk(id, {
+      include: [TrainSession],
+    });
     if (!session)
       throw new NotFoundException(`Session with id: ${id} does not exist`);
     if (session?.userId != req.user.sub)
@@ -94,6 +110,20 @@ export class SessionsService {
       });
 
     let tasks: any[] = [];
+
+    const taskTypeFromTrainSession = session.trainSession?.task;
+
+    if (taskTypeFromTrainSession) {
+      const invalid = body.some(
+        (item: any) => item.type && item.type !== taskTypeFromTrainSession,
+      );
+      if (invalid) {
+        throw new BadRequestException({
+          message: `This session is configured to use only task type "${taskTypeFromTrainSession}"`,
+          error: "InvalidTaskType",
+        });
+      }
+    }
 
     const summa: number = body.reduce(
       (sum: number, item: any) => sum + item.count,
@@ -111,7 +141,7 @@ export class SessionsService {
         const task = await this.tasksService.generateTask(
           Exam.OGE,
           Sub.INFO,
-          item.type,
+          taskTypeFromTrainSession || item.type,
         );
         task.task.sessionId = id;
         task.task.save().then();

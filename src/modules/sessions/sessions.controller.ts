@@ -1,23 +1,42 @@
 import {
   Body,
   Controller,
-  HttpCode, Param,
-  Post, Put, Query,
+  Get,
+  HttpCode,
+  Param,
+  Post,
+  Put,
+  Query,
   Req,
   Res,
-  UseGuards
+  UseGuards,
 } from "@nestjs/common";
 import { SessionsService } from "./sessions.service";
 import { JwtAuthGuard } from "../auth/guards/auth.guard";
 import { Request } from "express";
 import { CreateSessionDto } from "./dto/create-session.dto";
 import { RegisterEventDto } from "./dto/register-event.dto";
+import { Session } from "./entities/session.entity";
+import { TrainSession } from "./entities/train-session.entity";
 
 @UseGuards(JwtAuthGuard)
 @Controller("sessions")
 export class SessionsController {
   constructor(private readonly sessionsService: SessionsService) {}
 
+  
+  @Get(':id')
+  async getSession(
+    @Param('id') id: string,
+    @Req() req: Request,
+    @Body() body: any
+  ) {
+    return await Session.findByPk(id, {
+      include: [TrainSession]
+    })
+  }
+  
+  
   @Post("create")
   async createSession(@Req() req: Request, @Body() body: CreateSessionDto) {
     return await this.sessionsService.createSession(body, req);
