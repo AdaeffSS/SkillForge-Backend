@@ -6,16 +6,17 @@ import {
   Param,
   Post,
   Put,
-  Query,
   Req,
-  Res,
   UseGuards,
 } from "@nestjs/common";
+import { Request } from "express";
+
 import { SessionsService } from "./sessions.service";
 import { JwtAuthGuard } from "../auth/guards/auth.guard";
-import { Request } from "express";
+
 import { CreateSessionDto } from "./dto/create-session.dto";
 import { RegisterEventDto } from "./dto/register-event.dto";
+
 import { Session } from "./entities/session.entity";
 import { TrainSession } from "./entities/train-session.entity";
 
@@ -28,8 +29,6 @@ export class SessionsController {
   @Get(':id')
   async getSession(
     @Param('id') id: string,
-    @Req() req: Request,
-    @Body() body: any
   ) {
     return await Session.findByPk(id, {
       include: [TrainSession]
@@ -50,7 +49,7 @@ export class SessionsController {
 
   @Put(':id/add-tasks')
   async addTasks(
-    @Param('id') sessionId: string,
+    @Param('id') sessionId: number,
     @Body() body: any,
     @Req() req: Request,
   ) {

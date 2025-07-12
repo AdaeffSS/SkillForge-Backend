@@ -1,5 +1,7 @@
-import { HttpException, Injectable, Logger } from "@nestjs/common";
+import { HttpException, Injectable } from "@nestjs/common";
 import mustache from "mustache";
+
+import { Logger } from "../logger/logger.service";
 import { RandomProvider } from "../random-provider/random-provider.service";
 import { ParamsGeneratorService } from "../params-generator/params-generator.service";
 import { TaskLoaderService } from "@tasks/tasks.loader";
@@ -11,12 +13,14 @@ export abstract class BaseTask {
   protected parameters!: Record<string, any>;
   protected random: RandomProvider;
 
-  private readonly logger = new Logger(BaseTask.name);
+  private readonly logger = new Logger();
 
   constructor(
     protected readonly paramsGenerator: ParamsGeneratorService,
     protected readonly taskLoader: TaskLoaderService,
-  ) {}
+  ) {
+    this.logger.setContext(this.constructor.name)
+  }
 
   private getMetadata() {
     const constructor = this.constructor as any;
@@ -37,10 +41,10 @@ export abstract class BaseTask {
     const { exam, subject, taskKey } = this.getMetadata();
 
     this.random = random;
-    const baseParams = this.taskLoader.getParameters(exam, subject, taskKey);
-    const generatedParams = await this.paramsGenerator.generateParams(this.paramsSchema);
+    this.parameters = this.taskLoader.getParameters(exam, subject, taskKey);
 
-    const combinedParams = { ...baseParams, ...generatedParams };
+    const generatedParams = await this.paramsGenerator.generateParams(this.paramsSchema);
+    const combinedParams = { ...this.parameters, ...generatedParams };
 
     const template = this.taskLoader.getTemplate(exam, subject, taskKey);
     if (!template) {
@@ -63,13 +67,16 @@ export abstract class BaseTask {
     const { exam, subject, taskKey } = this.getMetadata();
 
     this.random = random;
-    const baseParams = this.taskLoader.getParameters(exam, subject, taskKey);
-    const generatedParams = await this.paramsGenerator.generateParams(this.paramsSchema);
+    this.parameters = this.taskLoader.getParameters(exam, subject, taskKey);
 
-    return { ...baseParams, ...generatedParams };
+    const generatedParams = await this.paramsGenerator.generateParams(this.paramsSchema);
+    return { ...this.parameters, ...generatedParams };
   }
 
-  async checkAnswer(random: RandomProvider, userAnswer: string): Promise<{ status: TaskStatus }> {
+  async checkAnswer(
+    random: RandomProvider,
+    userAnswer: string,
+  ): Promise<{ status: TaskStatus }> {
     const combinedParams = await this.regenerateParams(random);
 
     if (!("answer" in combinedParams)) {
@@ -79,7 +86,7 @@ export abstract class BaseTask {
     const expected = String(combinedParams.answer).trim();
     const actual = String(userAnswer).trim();
 
-    this.logger.debug(`Expected answer: "${expected}", actual answer: "${actual}", seed: ${random.getSeed()}`);
+    this.logger.debug(`Expected: "${expected}", actual: "${actual}", seed: ${random.getSeed()}`);
 
     return {
       status:

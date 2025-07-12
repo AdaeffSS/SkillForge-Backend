@@ -1,17 +1,19 @@
 import {
   Injectable,
   NestMiddleware,
+  Logger,
 } from "@nestjs/common";
-import { Request, Response, NextFunction } from "express";
+import { Request, NextFunction } from "express";
 import { TokensUtils } from "../utils/tokens.util";
 
 @Injectable()
 export class JwtDecodeMiddleware implements NestMiddleware {
+  private readonly logger = new Logger(JwtDecodeMiddleware.name);
+
   constructor(private readonly tokensUtils: TokensUtils) {}
 
-  async use(req: Request, res: Response, next: NextFunction) {
+  async use(req: Request, next: NextFunction) {
     const accessToken = this.extractToken(req);
-
 
     if (!accessToken) {
       return next();
@@ -19,14 +21,14 @@ export class JwtDecodeMiddleware implements NestMiddleware {
 
     try {
       req.user = await this.tokensUtils.validateAccessToken(accessToken);
-    } catch (err) {
+    } catch (error) {
+      this.logger.debug(`Invalid access token: ${error.message || error}`);
     }
 
     next();
   }
 
-
-  private extractToken(request: Request): string | null {
-    return request.cookies?.accessToken ?? null;
+  private extractToken(req: Request): string | null {
+    return req.cookies?.accessToken ?? null;
   }
 }

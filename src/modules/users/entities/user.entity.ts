@@ -6,7 +6,6 @@ import {
   DataType,
   HasMany
 } from "sequelize-typescript";
-import { Task } from "@tasks/entities/task.entity";
 import { Session } from "../../sessions/entities/session.entity";
 
 @Table({
