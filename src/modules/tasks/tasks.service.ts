@@ -6,18 +6,77 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from "@nestjs/common";
-import { Exam, Sub } from "@tasks/enums";
 import { Request } from "express";
+
 import { RandomProvider } from "../random-provider/random-provider.service";
 import { TasksManager } from "./tasks.manager";
 import { Task, TaskStatus } from "@tasks/entities/task.entity";
-import { TrainSession } from "../sessions/entities/train-session.entity";
 import { Session } from "../sessions/entities/session.entity";
 import { EventType, SessionEvent } from "../sessions/entities/session-event.entity";
+import { Exam, Sub } from "@tasks/enums";
 
 @Injectable()
 export class TasksService {
   constructor(private readonly tasksManager: TasksManager) {}
+
+  private validateAnswerTaskParams(
+    taskId: string,
+    answer: string,
+    sessionId: number,
+    userId?: string,
+  ): void {
+    if (!taskId || !answer || !userId || !sessionId) {
+      throw new BadRequestException(
+        "The fields are incorrectly filled. Repeat the attempt.",
+      );
+    }
+  }
+
+  private async findTaskAndCheckAccess(
+    taskId: string,
+    userId: string,
+  ): Promise<Task> {
+    let task: Task | null;
+    try {
+      task = await Task.findByPk(taskId, {
+        include: [Session],
+      });
+    } catch (err) {
+      if (err.status === 404)
+        throw new NotFoundException("The task with such ID was not found");
+      if (err.name === "SequelizeDatabaseError") {
+        throw new BadRequestException("Invalid task ID format");
+      }
+      throw new InternalServerErrorException("Database error", { cause: err });
+    }
+
+    if (!task) {
+      throw new NotFoundException(`Task with ID ${taskId} not found.`);
+    }
+
+    if (task.session.userId !== userId) {
+      throw new ForbiddenException("You have no access to this session.");
+    }
+
+    return task;
+  }
+
+  private updateTaskStatusAndLogEvent(
+    task: Task,
+    newStatus: TaskStatus,
+    eventType: EventType,
+  ) {
+    task.status = newStatus;
+    task.solvedAt = new Date();
+
+    SessionEvent.create({
+      sessionId: task.session.id,
+      type: eventType,
+      context: { taskId: task.id, taskType: task.task },
+    }).then()
+
+    task.save().then()
+  }
 
   async generateTask(exam: Exam, subject: Sub, task: string) {
     const random = new RandomProvider();
@@ -31,34 +90,9 @@ export class TasksService {
     sessionId: number,
     req: Request,
   ): Promise<any> {
-    if (!taskId || !answer || !req?.user?.sub || !sessionId) {
-      throw new BadRequestException(
-        "The fields are incorrectly filled. Repeat the attempt.",
-      );
-    }
+    this.validateAnswerTaskParams(taskId, answer, sessionId, req.user.sub);
 
-    let taskFromDb: Task | null;
-
-    try {
-      taskFromDb = await Task.findByPk(taskId, {
-        include: [Session],
-      });
-    } catch (err) {
-      if (err.status === 404)
-        throw new NotFoundException("The task with such ID was not found");
-      if (err.name === "SequelizeDatabaseError") {
-        throw new BadRequestException("Invalid task ID format");
-      }
-      throw new InternalServerErrorException("Database error", { cause: err });
-    }
-
-    if (taskFromDb?.session.userId !== req.user.sub) {
-      throw new ForbiddenException("You have no access to this session.");
-    }
-
-    if (!taskFromDb) {
-      throw new NotFoundException(`Task with ID ${taskId} not found.`);
-    }
+    const taskFromDb = await this.findTaskAndCheckAccess(taskId, req.user.sub);
 
     if (taskFromDb.status == TaskStatus.SOLVED)
       throw new ConflictException("The task has already been solved");
@@ -88,26 +122,23 @@ export class TasksService {
         result.status == TaskStatus.INCORRECT &&
         taskFromDb.status != TaskStatus.INCORRECT
       ) {
-        taskFromDb.status = TaskStatus.INCORRECT;
-        taskFromDb.solvedAt = new Date();
-        SessionEvent.create({
-          sessionId: taskFromDb.session.id,
-          type: EventType.SOLVE_INCORRECTLY,
-          context: { taskId: taskFromDb.id, taskType: taskFromDb.task }
-        }).then()
+        this.updateTaskStatusAndLogEvent(
+          taskFromDb,
+          TaskStatus.INCORRECT,
+          EventType.SOLVE_INCORRECTLY
+        )
       }
 
       if (result.status == TaskStatus.SOLVED) {
-        taskFromDb.status = TaskStatus.SOLVED;
-        taskFromDb.solvedAt = new Date();
-        SessionEvent.create({
-          sessionId: taskFromDb.session.id,
-          type: EventType.SOLVE_INCORRECTLY,
-          context: { taskId: taskFromDb.id, taskType: taskFromDb.task }
-        }).then()
+        this.updateTaskStatusAndLogEvent(
+          taskFromDb,
+          TaskStatus.SOLVED,
+          EventType.SOLVE_CORRECTLY,
+        );
       }
-      await taskFromDb.save();
+
       return { ...result, attempts: taskFromDb.attempts };
+
     } catch (err) {
       if (
         err instanceof BadRequestException ||

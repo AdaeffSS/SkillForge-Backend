@@ -1,9 +1,9 @@
-import { ParamsGeneratorService } from "../params-generator/params-generator.service";
-import { HttpException, Injectable } from "@nestjs/common";
+import { HttpException, Injectable, Logger } from "@nestjs/common";
 import mustache from "mustache";
-import { TaskLoaderService } from "./tasks.loader";
-import { Task, TaskStatus } from "@tasks/entities/task.entity";
 import { RandomProvider } from "../random-provider/random-provider.service";
+import { ParamsGeneratorService } from "../params-generator/params-generator.service";
+import { TaskLoaderService } from "@tasks/tasks.loader";
+import { Task, TaskStatus } from "@tasks/entities/task.entity";
 
 @Injectable()
 export abstract class BaseTask {
@@ -11,17 +11,15 @@ export abstract class BaseTask {
   protected parameters!: Record<string, any>;
   protected random: RandomProvider;
 
+  private readonly logger = new Logger(BaseTask.name);
+
   constructor(
     protected readonly paramsGenerator: ParamsGeneratorService,
     protected readonly taskLoader: TaskLoaderService,
   ) {}
 
-  async createTask(
-    random: RandomProvider,
-  ): Promise<{
-    task: any; body: string }> {
+  private getMetadata() {
     const constructor = this.constructor as any;
-
     const exam = Reflect.getMetadata("exam", constructor);
     const subject = Reflect.getMetadata("subject", constructor);
     const taskKey = Reflect.getMetadata("taskKey", constructor);
@@ -30,12 +28,19 @@ export abstract class BaseTask {
       throw new HttpException("Task metadata not found", 500);
     }
 
-    this.random = random;
-    this.parameters = this.taskLoader.getParameters(exam, subject, taskKey);
+    return { exam, subject, taskKey };
+  }
 
-    const combinedParams = await this.paramsGenerator.generateParams(
-      this.paramsSchema,
-    );
+  async createTask(
+    random: RandomProvider,
+  ): Promise<{ task: any; body: string }> {
+    const { exam, subject, taskKey } = this.getMetadata();
+
+    this.random = random;
+    const baseParams = this.taskLoader.getParameters(exam, subject, taskKey);
+    const generatedParams = await this.paramsGenerator.generateParams(this.paramsSchema);
+
+    const combinedParams = { ...baseParams, ...generatedParams };
 
     const template = this.taskLoader.getTemplate(exam, subject, taskKey);
     if (!template) {
@@ -49,27 +54,22 @@ export abstract class BaseTask {
       task: `${exam}.${subject}.${taskKey}`,
     });
 
-    return { task: task, body: mustache.render(template, combinedParams) };
+    return { task, body: mustache.render(template, combinedParams) };
   }
 
   protected async regenerateParams(
     random: RandomProvider,
   ): Promise<Record<string, any>> {
-    const constructor = this.constructor as any;
-    const exam = Reflect.getMetadata("exam", constructor);
-    const subject = Reflect.getMetadata("subject", constructor);
-    const taskKey = Reflect.getMetadata("taskKey", constructor);
+    const { exam, subject, taskKey } = this.getMetadata();
 
     this.random = random;
-    this.parameters = this.taskLoader.getParameters(exam, subject, taskKey);
+    const baseParams = this.taskLoader.getParameters(exam, subject, taskKey);
+    const generatedParams = await this.paramsGenerator.generateParams(this.paramsSchema);
 
-    const generatedParams = await this.paramsGenerator.generateParams(
-      this.paramsSchema,
-    );
-    return { ...generatedParams };
+    return { ...baseParams, ...generatedParams };
   }
 
-  async checkAnswer(random: RandomProvider, userAnswer: string): Promise<{ status: string }> {
+  async checkAnswer(random: RandomProvider, userAnswer: string): Promise<{ status: TaskStatus }> {
     const combinedParams = await this.regenerateParams(random);
 
     if (!("answer" in combinedParams)) {
@@ -79,10 +79,13 @@ export abstract class BaseTask {
     const expected = String(combinedParams.answer).trim();
     const actual = String(userAnswer).trim();
 
-    console.log(combinedParams);
-    console.log('chAns', random.getSeed());
-    console.log(expected, actual);
+    this.logger.debug(`Expected answer: "${expected}", actual answer: "${actual}", seed: ${random.getSeed()}`);
 
-    return { status: expected.toLowerCase() === actual.toLowerCase() ? TaskStatus.SOLVED : TaskStatus.INCORRECT };
+    return {
+      status:
+        expected.toLowerCase() === actual.toLowerCase()
+          ? TaskStatus.SOLVED
+          : TaskStatus.INCORRECT,
+    };
   }
 }

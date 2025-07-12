@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { DynamicModule, Module } from "@nestjs/common";
 import { SessionsService } from './sessions.service';
 import { SessionsController } from './sessions.controller';
 import { SequelizeModule } from "@nestjs/sequelize";
@@ -8,18 +8,22 @@ import { User } from "../users/entities/user.entity";
 import { Task } from "@tasks/entities/task.entity";
 import { SessionConfiguration } from "./entities/session-configuration.entity";
 import { TrainSession } from "./entities/train-session.entity";
-import { TasksModule } from "@tasks/tasks.module";
-import { TasksService } from "@tasks/tasks.service";
-import { TasksManager } from "@tasks/tasks.manager";
 import { LoggerModule } from "modules/logger/logger.module";
 
-@Module({
-  imports: [
-    LoggerModule,
-    TasksModule,
-    SequelizeModule.forFeature([Session, SessionEvent, SessionConfiguration, TrainSession, User, Task]),
-  ],
-  controllers: [SessionsController],
-  providers: [SessionsService, TasksService, TasksManager],
-})
-export class SessionsModule {}
+@Module({})
+export class SessionsModule {
+  static forRoot(tasksModule: DynamicModule): DynamicModule {
+    return {
+      module: SessionsModule,
+      imports: [
+        tasksModule,
+        LoggerModule,
+        SequelizeModule.forFeature([Session, SessionEvent, SessionConfiguration, TrainSession, User, Task]),
+      ],
+      controllers: [SessionsController],
+      providers: [SessionsService],
+      exports: [SessionsService],
+    };
+  }
+}
+

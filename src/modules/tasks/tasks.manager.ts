@@ -1,19 +1,26 @@
-import { HttpException, Injectable, OnModuleInit } from "@nestjs/common";
-import { ModuleRef } from '@nestjs/core';
-import { tasksRegistry } from './tasks.registry';
-import { BaseTask } from './baseTask';
+import { HttpException, Injectable, InternalServerErrorException, OnModuleInit } from "@nestjs/common";
+import { BaseTask } from "@tasks/baseTask";
 import { RandomProvider } from "../random-provider/random-provider.service";
+import { TaskLoaderService } from "./tasks.loader";
+import { ModuleRef } from "@nestjs/core";
 
 @Injectable()
 export class TasksManager implements OnModuleInit {
   private readonly registry = new Map<string, BaseTask>();
 
   constructor(
-    private readonly moduleRef: ModuleRef
+    private readonly moduleRef: ModuleRef,
+    private readonly taskLoaderService: TaskLoaderService
   ) {}
 
+  private buildKey(exam: string, subject: string, taskKey: string): string {
+    return `${exam}.${subject}.${taskKey}`;
+  }
+
   async onModuleInit() {
-    for (const taskClass of tasksRegistry) {
+    const taskClasses = await this.taskLoaderService.importAllTasks();
+
+    for (const taskClass of taskClasses) {
       const taskInstance = this.moduleRef.get(taskClass, { strict: false });
       if (!taskInstance) continue;
 
@@ -22,16 +29,20 @@ export class TasksManager implements OnModuleInit {
       const taskKey = Reflect.getMetadata('taskKey', taskClass);
 
       if (!exam || !subject || !taskKey) {
-        throw new Error(`Task ${taskClass.name} is missing metadata`);
+        throw new InternalServerErrorException(`Task ${taskClass.name} is missing required metadata (exam, subject, taskKey)`);
       }
 
-      const compositeKey = `${exam}.${subject}.${taskKey}`;
+      const compositeKey = this.buildKey(exam, subject, taskKey);
       this.registry.set(compositeKey, taskInstance);
     }
   }
 
-  getTask<T>(exam: string, subject: string, key: string, random: RandomProvider): BaseTask {
-    const compositeKey = `${exam}.${subject}.${key}`;
+  private getVariantTasks(prefix: string): string[] {
+    return Array.from(this.registry.keys()).filter(k => k.startsWith(prefix));
+  }
+
+  getTask(exam: string, subject: string, key: string, random: RandomProvider): BaseTask {
+    const compositeKey = this.buildKey(exam, subject, key);
 
     const exactTask = this.registry.get(compositeKey);
     if (exactTask) {
@@ -39,14 +50,18 @@ export class TasksManager implements OnModuleInit {
       return exactTask;
     }
 
-    const matchingKeys = Array.from(this.registry.keys()).filter(k => k.startsWith(`${compositeKey}_`));
+    const matchingKeys = this.getVariantTasks(`${compositeKey}_`);
 
     if (matchingKeys.length === 0) {
       throw new HttpException(`Task not found: ${compositeKey}`, 404);
     }
 
-    const task_type = random.pick(matchingKeys)
+    const selectedKey = random.pick(matchingKeys);
+    const selectedTask = this.registry.get(selectedKey);
+    if (!selectedTask) {
+      throw new InternalServerErrorException(`Task not found for key: ${selectedKey}`);
+    }
 
-    return this.registry.get(task_type)!;
+    return selectedTask;
   }
 }

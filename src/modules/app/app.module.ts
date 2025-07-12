@@ -1,13 +1,9 @@
 import { MiddlewareConsumer, Module, NestModule, DynamicModule } from "@nestjs/common";
 import { SequelizeModule, SequelizeModuleOptions } from "@nestjs/sequelize";
 import { ConfigModule } from "@nestjs/config";
-import { User } from "../users/entities/user.entity";
-import { Otp } from "../auth/entites/otp.entity";
-import { AuthModule } from "../auth/auth.module";
 import * as process from "node:process";
-import { LoggerMiddleware } from "../logger/logger.middleware";
-import { LoggerModule } from "../logger/logger.module";
 import { JwtModule } from "@nestjs/jwt";
+
 import { TokensUtils } from "../auth/utils/tokens.util";
 import { TasksModule } from "@tasks/tasks.module";
 import { TaskLoaderService } from "@tasks/tasks.loader";
@@ -21,6 +17,11 @@ import { SessionEvent } from "../sessions/entities/session-event.entity";
 import { SessionConfiguration } from "../sessions/entities/session-configuration.entity";
 import { Logger } from "../logger/logger.service";
 import { TrainSession } from "../sessions/entities/train-session.entity";
+import { User } from "../users/entities/user.entity";
+import { Otp } from "../auth/entites/otp.entity";
+import { AuthModule } from "../auth/auth.module";
+import { LoggerMiddleware } from "../logger/logger.middleware";
+import { LoggerModule } from "../logger/logger.module";
 
 const sequelizeModels = [
   User,
@@ -57,24 +58,27 @@ export class AppModule implements NestModule {
     taskLoader: TaskLoaderService,
     logger: Logger
   ): Promise<DynamicModule> {
+    const tasksModule = TasksModule.forRoot(tasksClasses, taskLoader);
+
     return {
       module: AppModule,
       imports: [
-        SessionsModule,
+        tasksModule,
+        SessionsModule.forRoot(tasksModule),
         MediaModule,
         S3Module,
-        TasksModule.forRoot(tasksClasses, taskLoader),
         LoggerModule,
         JwtModule,
         AuthModule,
         await ConfigModule.forRoot({
           envFilePath: ".env",
         }),
-        SequelizeModule.forRoot(buildSequelizeOptions(logger))
+        SequelizeModule.forRoot(buildSequelizeOptions(logger)),
       ],
       providers: [TokensUtils],
     };
   }
+
 
 
   configure(consumer: MiddlewareConsumer) {
