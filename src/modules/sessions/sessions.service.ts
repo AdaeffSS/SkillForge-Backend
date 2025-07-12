@@ -25,6 +25,12 @@ export class SessionsService {
     logger.setContext(SessionsService.name);
   }
 
+  /**
+   * Ищет сессию по ID или выбрасывает исключение 404, если не найдена.
+   * @param id - Идентификатор сессии.
+   * @returns Promise, который резолвится в объект сессии.
+   * @throws NotFoundException если сессия не найдена.
+   */
   private async findSessionOrFail(id: number): Promise<Session> {
     const session = await Session.findByPk(id, { include: [TrainSession] });
     if (!session)
@@ -32,6 +38,12 @@ export class SessionsService {
     return session;
   }
 
+  /**
+   * Проверяет, что текущий пользователь является владельцем сессии.
+   * @param session - объект сессии.
+   * @param userId - идентификатор пользователя.
+   * @throws ForbiddenException если пользователь не является владельцем сессии.
+   */
   private assertUserOwnsSession(session: Session, userId: string): void {
     if (session.userId !== userId) {
       throw new ForbiddenException(
@@ -40,6 +52,11 @@ export class SessionsService {
     }
   }
 
+  /**
+   * Проверяет, что событие создания сессии еще не зарегистрировано.
+   * @param event - DTO события регистрации.
+   * @throws ConflictException если событие создания уже существует.
+   */
   private async createEventIfNotExists(event: RegisterEventDto): Promise<void> {
     const exists = await SessionEvent.findOne({
       where: { sessionId: event.sessionId, type: event.type },
@@ -48,10 +65,20 @@ export class SessionsService {
       throw new ConflictException("This session has already been created");
   }
 
+  /**
+   * Асинхронно сохраняет сессию.
+   * @param session - объект сессии.
+   */
   private saveSession(session: Session): void {
     session.save().then();
   }
 
+  /**
+   * Создает сессию типа TRAIN и регистрирует соответствующее событие.
+   * @param id - Идентификатор сессии.
+   * @param body - Тело запроса с данными сессии.
+   * @param req - HTTP-запрос для получения данных пользователя.
+   */
   private async createTrainSession(id: number, body: any, req: Request): Promise<void> {
     await TrainSession.create({ id, task: body.task });
 
@@ -67,6 +94,12 @@ export class SessionsService {
     }
   }
 
+  /**
+   * Создает новую сессию, регистрирует событие создания и, если нужно, создает тренировочную сессию.
+   * @param body - DTO создания сессии.
+   * @param req - HTTP-запрос для получения данных пользователя.
+   * @returns URL созданной сессии.
+   */
   async createSession(body: CreateSessionDto, req: Request): Promise<string> {
     const session = await Session.create({
       userId: req.user.sub,
@@ -95,6 +128,11 @@ export class SessionsService {
     return `/sessions/${session.id}`;
   }
 
+  /**
+   * Регистрирует событие сессии с проверкой доступа и обновлением состояния сессии.
+   * @param event - DTO события регистрации.
+   * @param req - HTTP-запрос для получения данных пользователя.
+   */
   async registerEvent(event: RegisterEventDto, req: Request): Promise<void> {
     const session = await this.findSessionOrFail(event.sessionId);
     this.assertUserOwnsSession(session, req.user.sub);
@@ -124,6 +162,14 @@ export class SessionsService {
     this.logger.log(`Event ${event.type} registered for session ${event.sessionId}`);
   }
 
+  /**
+   * Добавляет задачи в сессию с проверкой прав, ограничений по типу и количеству.
+   * @param id - Идентификатор сессии.
+   * @param body - Массив объектов с описанием задач.
+   * @param req - HTTP-запрос для получения данных пользователя.
+   * @returns Массив добавленных задач с их идентификаторами и телом.
+   * @throws BadRequestException при превышении лимита задач или несоответствии типа задачи.
+   */
   async addTasks(id: number, body: any[], req: Request): Promise<any[]> {
     const session = await this.findSessionOrFail(id);
     this.assertUserOwnsSession(session, req.user.sub);

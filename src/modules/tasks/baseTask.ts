@@ -9,12 +9,29 @@ import { Task, TaskStatus } from "@tasks/entities/task.entity";
 
 @Injectable()
 export abstract class BaseTask {
+  /**
+   * Схема параметров для генерации.
+   * Должна быть реализована в потомках.
+   */
   protected abstract readonly paramsSchema: any;
+
+  /**
+   * Параметры, загруженные из файла parameters.yaml
+   */
   protected parameters!: Record<string, any>;
+
+  /**
+   * Провайдер случайных чисел
+   */
   protected random: RandomProvider;
 
   private readonly logger = new Logger();
 
+  /**
+   * Конструктор класса.
+   * @param paramsGenerator Сервис генерации параметров по схеме
+   * @param taskLoader Сервис загрузки шаблонов и параметров задания
+   */
   constructor(
     protected readonly paramsGenerator: ParamsGeneratorService,
     protected readonly taskLoader: TaskLoaderService,
@@ -22,6 +39,10 @@ export abstract class BaseTask {
     this.logger.setContext(this.constructor.name)
   }
 
+  /**
+   * Получить метаданные (exam, subject, taskKey) из декораторов класса
+   * @throws HttpException если метаданные не найдены
+   */
   private getMetadata() {
     const constructor = this.constructor as any;
     const exam = Reflect.getMetadata("exam", constructor);
@@ -35,6 +56,12 @@ export abstract class BaseTask {
     return { exam, subject, taskKey };
   }
 
+  /**
+   * Создать задачу, сгенерировать параметры и срендерить тело задания
+   * @param random Провайдер случайных чисел
+   * @returns Объект с моделью задачи и отрендеренным телом задания
+   * @throws HttpException если шаблон не найден
+   */
   async createTask(
     random: RandomProvider,
   ): Promise<{ task: any; body: string }> {
@@ -61,6 +88,11 @@ export abstract class BaseTask {
     return { task, body: mustache.render(template, combinedParams) };
   }
 
+  /**
+   * Восстановить параметры задачи по сиду (seed)
+   * @param random Провайдер случайных чисел
+   * @returns Объект с объединёнными параметрами
+   */
   protected async regenerateParams(
     random: RandomProvider,
   ): Promise<Record<string, any>> {
@@ -73,6 +105,13 @@ export abstract class BaseTask {
     return { ...this.parameters, ...generatedParams };
   }
 
+  /**
+   * Проверить ответ пользователя
+   * @param random Провайдер случайных чисел
+   * @param userAnswer Ответ пользователя в виде строки
+   * @returns Статус проверки задачи (решена или неверный ответ)
+   * @throws Error если в параметрах нет правильного ответа
+   */
   async checkAnswer(
     random: RandomProvider,
     userAnswer: string,

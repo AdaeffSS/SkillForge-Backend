@@ -6,7 +6,13 @@ import { UsersService } from "../users/users.service"
 
 @Injectable()
 export class AuthService {
+  /**
+   * Максимальное количество попыток ввода кода
+   */
   private readonly MAX_ATTEMPTS = 3
+  /**
+   * Время жизни кода в миллисекундах (5 минут)
+   */
   private readonly CODE_EXPIRATION_MS = 5 * 60 * 1000 // 5 минут
 
   constructor(
@@ -15,10 +21,20 @@ export class AuthService {
     private readonly usersService: UsersService,
   ) {}
 
+  /**
+   * Нормализует номер телефона, удаляя все нечисловые символы
+   * @param phone - Исходный номер телефона в любом формате
+   * @returns Нормализованный номер телефона, состоящий только из цифр
+   */
   private normalizePhone(phone: string): string {
     return phone.replace(/\D/g, "")
   }
 
+  /**
+   * Запрашивает звонок с кодом подтверждения на указанный номер телефона
+   * @param phoneNumber - Номер телефона, на который будет отправлен звонок
+   * @returns Объект с сообщением о статусе отправки звонка
+   */
   async requestCode(phoneNumber: string) {
     const normalizedPhone = this.normalizePhone(phoneNumber)
     const code = await this.zvonokService.sendCall(normalizedPhone)
@@ -34,6 +50,13 @@ export class AuthService {
     return { message: "Звонок отправлен. Введите 4 последние цифры номера" }
   }
 
+  /**
+   * Проверяет введённый пользователем код подтверждения
+   * @param phoneNumber - Номер телефона, для которого проверяется код
+   * @param code - Введённый пользователем код подтверждения
+   * @throws HttpException при некорректных данных, истечении срока действия кода, превышении количества попыток или неверном коде
+   * @returns Объект с accessToken, refreshToken и информацией о пользователе при успешной проверке
+   */
   async verifyCode(phoneNumber: string, code: string) {
     if (!phoneNumber || !code) {
       throw new HttpException("Неверный запрос", HttpStatus.BAD_REQUEST)

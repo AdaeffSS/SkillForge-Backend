@@ -19,6 +19,14 @@ import { Exam, Sub } from "@tasks/enums";
 export class TasksService {
   constructor(private readonly tasksManager: TasksManager) {}
 
+  /**
+   * Валидация параметров для ответа на задачу
+   * @param taskId ID задачи
+   * @param answer Ответ пользователя
+   * @param sessionId ID сессии
+   * @param userId ID пользователя (опционально)
+   * @throws BadRequestException при отсутствии необходимых параметров
+   */
   private validateAnswerTaskParams(
     taskId: string,
     answer: string,
@@ -32,6 +40,16 @@ export class TasksService {
     }
   }
 
+  /**
+   * Поиск задачи по ID и проверка прав доступа пользователя
+   * @param taskId ID задачи
+   * @param userId ID пользователя
+   * @returns Найденная задача
+   * @throws NotFoundException если задача не найдена
+   * @throws ForbiddenException если пользователь не имеет доступа к сессии задачи
+   * @throws BadRequestException при ошибке формата ID
+   * @throws InternalServerErrorException при ошибках базы данных
+   */
   private async findTaskAndCheckAccess(
     taskId: string,
     userId: string,
@@ -61,6 +79,12 @@ export class TasksService {
     return task;
   }
 
+  /**
+   * Обновить статус задачи, установить время решения и зарегистрировать событие сессии
+   * @param task Задача для обновления
+   * @param newStatus Новый статус задачи
+   * @param eventType Тип события сессии для логирования
+   */
   private updateTaskStatusAndLogEvent(
     task: Task,
     newStatus: TaskStatus,
@@ -73,17 +97,36 @@ export class TasksService {
       sessionId: task.session.id,
       type: eventType,
       context: { taskId: task.id, taskType: task.task },
-    }).then()
+    }).then();
 
-    task.save().then()
+    task.save().then();
   }
 
+  /**
+   * Сгенерировать новую задачу по экзамену, предмету и ключу
+   * @param exam Экзамен
+   * @param subject Предмет
+   * @param task Ключ задачи
+   * @returns Сгенерированная задача
+   */
   async generateTask(exam: Exam, subject: Sub, task: string) {
     const random = new RandomProvider();
     const taskInstance = this.tasksManager.getTask(exam, subject, task, random);
     return taskInstance.createTask(random);
   }
 
+  /**
+   * Обработать ответ на задачу пользователя
+   * @param taskId ID задачи
+   * @param answer Ответ пользователя
+   * @param sessionId ID сессии
+   * @param req Объект запроса Express (используется для получения пользователя)
+   * @returns Результат проверки ответа и количество попыток
+   * @throws BadRequestException при некорректных параметрах или формате идентификатора задачи
+   * @throws ForbiddenException при отсутствии доступа к сессии
+   * @throws ConflictException если задача уже решена
+   * @throws InternalServerErrorException при ошибках выполнения задачи
+   */
   async answerTask(
     taskId: string,
     answer: string,
@@ -126,7 +169,7 @@ export class TasksService {
           taskFromDb,
           TaskStatus.INCORRECT,
           EventType.SOLVE_INCORRECTLY
-        )
+        );
       }
 
       if (result.status == TaskStatus.SOLVED) {
@@ -138,7 +181,6 @@ export class TasksService {
       }
 
       return { ...result, attempts: taskFromDb.attempts };
-
     } catch (err) {
       if (
         err instanceof BadRequestException ||

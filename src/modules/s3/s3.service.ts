@@ -59,7 +59,7 @@ export class S3Service {
 
     const response = await this.client.send(command)
     if (!response.Body || typeof response.Body === "string") {
-      throw new Error('Не удалось получить тельно ответа от S3')
+      throw new Error('Не удалось получить ответа от S3')
     }
     return response.Body as NodeJS.ReadableStream;
   }

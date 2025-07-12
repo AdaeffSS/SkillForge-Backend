@@ -12,7 +12,7 @@ export class JwtDecodeMiddleware implements NestMiddleware {
 
   constructor(private readonly tokensUtils: TokensUtils) {}
 
-  async use(req: Request, next: NextFunction) {
+  async use(req: Request, res: Response, next: NextFunction) {
     const accessToken = this.extractToken(req);
 
     if (!accessToken) {

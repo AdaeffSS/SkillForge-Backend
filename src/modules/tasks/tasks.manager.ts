@@ -13,10 +13,20 @@ export class TasksManager implements OnModuleInit {
     private readonly taskLoaderService: TaskLoaderService
   ) {}
 
+  /**
+   * Построить составной ключ задачи из экзамена, предмета и ключа задачи
+   * @param exam Экзамен
+   * @param subject Предмет
+   * @param taskKey Ключ задачи
+   * @returns Составной ключ
+   */
   private buildKey(exam: string, subject: string, taskKey: string): string {
     return `${exam}.${subject}.${taskKey}`;
   }
 
+  /**
+   * Инициализация модуля: импорт всех классов задач и регистрация их экземпляров
+   */
   async onModuleInit() {
     const taskClasses = await this.taskLoaderService.importAllTasks();
 
@@ -37,10 +47,26 @@ export class TasksManager implements OnModuleInit {
     }
   }
 
+  /**
+   * Получить все ключи задач, начинающиеся с заданного префикса
+   * @param prefix Префикс ключа задачи
+   * @returns Массив ключей задач, начинающихся с prefix
+   */
   private getVariantTasks(prefix: string): string[] {
     return Array.from(this.registry.keys()).filter(k => k.startsWith(prefix));
   }
 
+  /**
+   * Получить задачу по экзамену, предмету и ключу задачи. Если точная задача не найдена,
+   * ищутся варианты с постфиксом, и выбирается случайная.
+   * @param exam Экзамен
+   * @param subject Предмет
+   * @param key Ключ задачи
+   * @param random Провайдер случайных чисел
+   * @returns Экземпляр задачи
+   * @throws HttpException 404 если задача не найдена
+   * @throws InternalServerErrorException если задача с выбранным ключом отсутствует в реестре
+   */
   getTask(exam: string, subject: string, key: string, random: RandomProvider): BaseTask {
     const compositeKey = this.buildKey(exam, subject, key);
 

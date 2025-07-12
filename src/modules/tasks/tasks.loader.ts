@@ -21,6 +21,11 @@ export class TaskLoaderService {
     "dist/modules/tasks",
   );
 
+  /**
+   * Получить папку задачи по ключу задачи.
+   * @param taskKey Ключ задачи
+   * @returns Папка задачи
+   */
   private getTaskFolder(taskKey: string): string {
     const lastUnderscore = taskKey.lastIndexOf("_");
     return lastUnderscore !== -1
@@ -28,6 +33,13 @@ export class TaskLoaderService {
       : taskKey;
   }
 
+  /**
+   * Построить ключ для шаблона задачи
+   * @param exam Экзамен
+   * @param subject Предмет
+   * @param taskKey Ключ задачи
+   * @returns Ключ шаблона
+   */
   private buildTemplateKey(
     exam: string,
     subject: string,
@@ -37,6 +49,13 @@ export class TaskLoaderService {
     return `${exam}/${subject}/${taskFolder}/${taskKey}`.toLowerCase();
   }
 
+  /**
+   * Построить ключ для параметров задачи
+   * @param exam Экзамен
+   * @param subject Предмет
+   * @param taskKey Ключ задачи
+   * @returns Ключ параметров
+   */
   private buildParametersKey(
     exam: string,
     subject: string,
@@ -46,6 +65,10 @@ export class TaskLoaderService {
     return `${exam}/${subject}/${taskFolder}`.toLowerCase();
   }
 
+  /**
+   * Импортировать все классы задач, а также загрузить шаблоны и параметры.
+   * @returns Массив импортированных классов задач
+   */
   async importAllTasks(): Promise<any[]> {
     const tasksClasses = await this.importTaskClasses();
     await this.loadTemplates();
@@ -79,6 +102,10 @@ export class TaskLoaderService {
     return tasksClasses;
   }
 
+  /**
+   * Импортировать классы задач из файлов
+   * @returns Массив классов задач
+   */
   private async importTaskClasses(): Promise<any[]> {
     const entries = await fg(["*/**/*.js"], {
       cwd: this.compiledTasksPath,
@@ -111,6 +138,9 @@ export class TaskLoaderService {
     return tasksClasses;
   }
 
+  /**
+   * Загрузить все mustache шаблоны из папки ресурсов
+   */
   private async loadTemplates(): Promise<void> {
     const pattern = "**/*.mustache";
 
@@ -137,6 +167,9 @@ export class TaskLoaderService {
     }
   }
 
+  /**
+   * Загрузить все YAML файлы с параметрами из папки ресурсов
+   */
   private async loadParameters(): Promise<void> {
     const pattern = "**/parameters.yaml";
 
@@ -166,6 +199,13 @@ export class TaskLoaderService {
     }
   }
 
+  /**
+   * Получить шаблон задачи по экзамену, предмету и ключу задачи
+   * @param exam Экзамен
+   * @param subject Предмет
+   * @param taskKey Ключ задачи
+   * @returns Содержимое шаблона
+   */
   getTemplate(exam: string, subject: string, taskKey: string): string {
     const key = this.buildTemplateKey(exam, subject, taskKey);
 
@@ -182,6 +222,13 @@ export class TaskLoaderService {
     return template;
   }
 
+  /**
+   * Получить параметры задачи по экзамену, предмету и ключу задачи
+   * @param exam Экзамен
+   * @param subject Предмет
+   * @param taskKey Ключ задачи
+   * @returns Параметры задачи
+   */
   getParameters(
     exam: string,
     subject: string,
