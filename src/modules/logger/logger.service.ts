@@ -3,7 +3,7 @@ import winston from "winston";
 import chalk from "chalk";
 import DailyRotateFile from "winston-daily-rotate-file";
 
-@Injectable({ scope: Scope.TRANSIENT })
+@Injectable()
 export class Logger implements BaseLogger {
   private logger: winston.Logger;
   private context: string;

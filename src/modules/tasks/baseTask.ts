@@ -2,7 +2,6 @@ import { ParamsGeneratorService } from "../params-generator/params-generator.ser
 import { HttpException, Injectable } from "@nestjs/common";
 import mustache from "mustache";
 import { TaskLoaderService } from "./tasks.loader";
-import "reflect-metadata";
 import { Task, TaskStatus } from "@tasks/entities/task.entity";
 import { RandomProvider } from "../random-provider/random-provider.service";
 
