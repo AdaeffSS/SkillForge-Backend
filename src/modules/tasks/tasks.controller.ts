@@ -1,22 +1,36 @@
-import { Controller, Get, Query, Res } from "@nestjs/common";
-import { createWriteStream } from 'fs';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode, Param,
+  Post, Put,
+  Query,
+  Req,
+  UseGuards
+} from "@nestjs/common";
+import { Request } from "express";
 import { TasksManager } from "./tasks.manager";
-import { Exam, Sub } from "./enums";
-import { writeFileSync } from 'fs';
-import { join } from 'path';
-import { v4 as uuidv4 } from 'uuid';
+import { TasksService } from "./tasks.service";
+import { JwtAuthGuard } from "modules/auth/guards/auth.guard";
+import { Exam, Sub } from "@tasks/enums";
 
+@UseGuards(JwtAuthGuard)
 @Controller("tasks")
 export class TasksController {
-  constructor(private readonly taskManager: TasksManager) {
-  }
+  constructor(
+    private readonly taskManager: TasksManager,
+    private readonly tasksService: TasksService,
+  ) {}
 
-  @Get()
-  async getTask(
-    @Query('exam') exam: Exam,
-    @Query('subject') subject: Sub,
-    @Query('task') task: string
+
+  @HttpCode(200)
+  @Post()
+  async checkTask(
+    @Body("task") task: string,
+    @Body("answer") answer: string,
+    @Body("sessionId") sessionId: number,
+    @Req() req: Request,
   ) {
-    return this.taskManager.getTask(exam, subject, task).createTask()
+    return await this.tasksService.answerTask(task, answer, sessionId, req);
   }
 }

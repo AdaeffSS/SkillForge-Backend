@@ -1,25 +1,28 @@
+import { Module, DynamicModule } from "@nestjs/common";
+
 import { TasksController } from "./tasks.controller";
 import { ParamsGeneratorService } from "../params-generator/params-generator.service";
 import { TasksManager } from "./tasks.manager";
-import { Module, DynamicModule } from "@nestjs/common";
 import { TaskLoaderService } from "./tasks.loader";
 import { LoggerModule } from "../logger/logger.module";
 import { Logger } from "../logger/logger.service";
-import { SequelizeModule } from "@nestjs/sequelize";
-import { Task } from "@tasks/entities/task.entity";
+import { TasksService } from "@tasks/tasks.service";
 
 @Module({})
 export class TasksModule {
+
   static forRoot(
     tasksClasses: any[],
     taskLoader: TaskLoaderService,
   ): DynamicModule {
+
     return {
       module: TasksModule,
-      imports: [LoggerModule, SequelizeModule.forFeature([Task])],
+      imports: [LoggerModule],
       controllers: [TasksController],
       providers: [
         ...tasksClasses,
+        TasksService,
         ParamsGeneratorService,
         Logger,
         TasksManager,
@@ -28,7 +31,7 @@ export class TasksModule {
           useValue: taskLoader,
         },
       ],
-      exports: [...tasksClasses, TaskLoaderService],
+      exports: [...tasksClasses, TaskLoaderService, TasksService, TasksManager],
     };
   }
 }

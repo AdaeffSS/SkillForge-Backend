@@ -4,7 +4,9 @@ import {
   Model,
   PrimaryKey,
   DataType,
+  HasMany
 } from "sequelize-typescript";
+import { Session } from "../../sessions/entities/session.entity";
 
 @Table({
   tableName: "users",
@@ -37,4 +39,7 @@ export class User extends Model {
     allowNull: true,
   })
   declare username: string;
+
+  @HasMany(() => Session)
+  declare sessions: Session[];
 }

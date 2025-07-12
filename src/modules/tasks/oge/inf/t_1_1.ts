@@ -5,7 +5,7 @@ import { Exam, Sub } from "@tasks/enums";
 
 @Injectable()
 @RegisterTask(Exam.OGE, Sub.INFO, "t_1_1")
-export class Task extends BaseTask {
+export class Task_Oge_Info_t_1_1 extends BaseTask {
 
   protected readonly paramsSchema = {
     gender: {

@@ -1,10 +1,15 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { User } from "./entities/user.entity";
 
+export enum UserRole {
+  USER = "user",
+  ADMIN = "admin",
+}
+
 @Injectable()
 export class UsersService {
-  async createUser(phoneNumber: string, role: "user" | "admin" = "user") {
-    return await User.create({ phoneNumber, role });
+  async createUser(phoneNumber: string, role: UserRole = UserRole.ADMIN) {
+    return User.create({ phoneNumber, role });
   }
 
   async getUserByPhoneNumber(phoneNumber: string) {
@@ -16,14 +21,13 @@ export class UsersService {
   }
 
   async loginByPhoneNumber(phoneNumber: string) {
-    let user = await this.getUserByPhoneNumber(phoneNumber).catch(() => null);
+    let user = await this.getUserByPhoneNumber(phoneNumber).catch()
     if (!user) {
       user = await this.createUser(phoneNumber);
     }
 
-    return {
-      sub: user.get("id", { plain: true }),
-      phone: user.get("phoneNumber", { plain: true }),
-    };
+    const { id, phoneNumber: phone, role, username } = user;
+
+    return { id, phoneNumber: phone, role, username };
   }
 }

@@ -3,8 +3,8 @@ import fg from "fast-glob";
 import { resolve, relative, basename } from "path";
 import { readFile } from "fs/promises";
 import yaml from "js-yaml";
+
 import { Logger } from "../logger/logger.service";
-import "reflect-metadata";
 
 @Injectable()
 export class TaskLoaderService {
@@ -12,8 +12,39 @@ export class TaskLoaderService {
     this.logger.setContext(TaskLoaderService.name);
   }
 
-  private templates: Record<string, string> = {};
-  private parameters: Record<string, Record<string, any>> = {};
+  private readonly templates: Record<string, string> = {};
+  private readonly parameters: Record<string, Record<string, any>> = {};
+
+  private readonly basePath = resolve(process.cwd(), "resources/tasks");
+  private readonly compiledTasksPath = resolve(
+    process.cwd(),
+    "dist/modules/tasks",
+  );
+
+  private getTaskFolder(taskKey: string): string {
+    const lastUnderscore = taskKey.lastIndexOf("_");
+    return lastUnderscore !== -1
+      ? taskKey.substring(0, lastUnderscore)
+      : taskKey;
+  }
+
+  private buildTemplateKey(
+    exam: string,
+    subject: string,
+    taskKey: string,
+  ): string {
+    const taskFolder = this.getTaskFolder(taskKey);
+    return `${exam}/${subject}/${taskFolder}/${taskKey}`.toLowerCase();
+  }
+
+  private buildParametersKey(
+    exam: string,
+    subject: string,
+    taskKey: string,
+  ): string {
+    const taskFolder = this.getTaskFolder(taskKey);
+    return `${exam}/${subject}/${taskFolder}`.toLowerCase();
+  }
 
   async importAllTasks(): Promise<any[]> {
     const tasksClasses = await this.importTaskClasses();
@@ -33,12 +64,12 @@ export class TaskLoaderService {
       try {
         this.getTemplate(exam, subject, taskKey);
         this.getParameters(exam, subject, taskKey);
-      } catch (err) {
+      } catch (e) {
         this.logger.error(
           `Data loading error for task ${exam}.${subject}.${taskKey}`,
-          err,
+          e,
         );
-        throw err;
+        throw e;
       }
     }
 
@@ -49,11 +80,8 @@ export class TaskLoaderService {
   }
 
   private async importTaskClasses(): Promise<any[]> {
-    const rootPath = process.cwd();
-    const tasksDir = resolve(rootPath, "dist/modules/tasks");
-
     const entries = await fg(["*/**/*.js"], {
-      cwd: tasksDir,
+      cwd: this.compiledTasksPath,
       absolute: true,
       ignore: ["entities/*.js"],
     });
@@ -61,30 +89,33 @@ export class TaskLoaderService {
     this.logger.log(`Found files for imports: ${entries.length}`);
 
     const tasksClasses: any[] = [];
+
     for (const filePath of entries) {
       try {
         const module = (await import(filePath)) as any;
         const taskClass = module.default ?? Object.values(module)[0];
         tasksClasses.push(taskClass);
-        this.logger.log(
-          `The task file is successfully imported: ${basename(relative(`${rootPath}/dist/modules/tasks/`, filePath), '.js')}`,
-        );
+
+        const relativePath = relative(this.compiledTasksPath, filePath);
+        const fileName = basename(relativePath, ".js");
+
+        this.logger.log(`The task file is successfully imported: ${fileName}`);
       } catch (error) {
-        console.error(error);
         this.logger.error(
-          `Error when importing file: ${relative(`${rootPath}/dist/modules/tasks/`, filePath)}`,
+          `Error when importing file: ${relative(this.compiledTasksPath, filePath)}`,
+          error,
         );
       }
     }
+
     return tasksClasses;
   }
 
   private async loadTemplates(): Promise<void> {
-    const basePath = resolve(process.cwd(), "resources/tasks");
     const pattern = "**/*.mustache";
 
     const files = await fg(pattern, {
-      cwd: basePath,
+      cwd: this.basePath,
       absolute: true,
     });
 
@@ -94,7 +125,7 @@ export class TaskLoaderService {
       try {
         const content = await readFile(filePath, "utf-8");
 
-        const relativePath = filePath.slice(basePath.length + 1);
+        const relativePath = filePath.slice(this.basePath.length + 1);
         const key = relativePath.replace(/\.mustache$/, "").toLowerCase();
 
         this.templates[key] = content;
@@ -107,11 +138,10 @@ export class TaskLoaderService {
   }
 
   private async loadParameters(): Promise<void> {
-    const basePath = resolve(process.cwd(), "resources/tasks");
     const pattern = "**/parameters.yaml";
 
     const files = await fg(pattern, {
-      cwd: basePath,
+      cwd: this.basePath,
       absolute: true,
     });
 
@@ -122,7 +152,7 @@ export class TaskLoaderService {
         const content = await readFile(filePath, "utf-8");
         const data = yaml.load(content) as Record<string, any>;
 
-        const relativePath = filePath.slice(basePath.length + 1);
+        const relativePath = filePath.slice(this.basePath.length + 1);
         const key = relativePath
           .replace(/\/parameters\.yaml$/, "")
           .toLowerCase();
@@ -137,11 +167,7 @@ export class TaskLoaderService {
   }
 
   getTemplate(exam: string, subject: string, taskKey: string): string {
-    const lastUnderscore = taskKey.lastIndexOf("_");
-    const taskFolder =
-      lastUnderscore !== -1 ? taskKey.substring(0, lastUnderscore) : taskKey;
-
-    const key = `${exam.toLowerCase()}/${subject.toLowerCase()}/${taskFolder.toLowerCase()}/${taskKey.toLowerCase()}`;
+    const key = this.buildTemplateKey(exam, subject, taskKey);
 
     const template = this.templates[key];
     if (!template) {
@@ -152,6 +178,7 @@ export class TaskLoaderService {
         `Template not found for task ${taskKey} in ${exam}/${subject} for key: ${key}`,
       );
     }
+
     return template;
   }
 
@@ -160,11 +187,7 @@ export class TaskLoaderService {
     subject: string,
     taskKey: string,
   ): Record<string, any> {
-    const lastUnderscore = taskKey.lastIndexOf("_");
-    const taskFolder =
-      lastUnderscore !== -1 ? taskKey.substring(0, lastUnderscore) : taskKey;
-
-    const key = `${exam.toLowerCase()}/${subject.toLowerCase()}/${taskFolder.toLowerCase()}`;
+    const key = this.buildParametersKey(exam, subject, taskKey);
 
     const params = this.parameters[key];
     if (!params) {
@@ -175,6 +198,7 @@ export class TaskLoaderService {
         `Parameters not found for task ${taskKey} in ${exam}.${subject} for key: ${key}`,
       );
     }
+
     return params;
   }
 }
