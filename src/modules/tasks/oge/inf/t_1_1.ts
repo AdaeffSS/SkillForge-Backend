@@ -1,11 +1,11 @@
 import { Injectable } from "@nestjs/common";
-import { BaseTask } from '@tasks/baseTask';
+import { TaskConfigurer } from '@tasks/taskConfigurer';
 import { RegisterTask } from "@tasks/tasks.decorator";
 import { Exam, Sub } from "@tasks/enums";
 
 @Injectable()
 @RegisterTask(Exam.OGE, Sub.INFO, "t_1_1")
-export class Task_Oge_Info_t_1_1 extends BaseTask {
+export class Task_Oge_Info_t_1_1 extends TaskConfigurer {
 
   protected readonly paramsSchema = {
     gender: {

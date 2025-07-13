@@ -8,7 +8,7 @@ import { TaskLoaderService } from "@tasks/tasks.loader";
 import { Task, TaskStatus } from "@tasks/entities/task.entity";
 
 @Injectable()
-export abstract class BaseTask {
+export abstract class TaskConfigurer {
   /**
    * Схема параметров для генерации.
    * Должна быть реализована в потомках.

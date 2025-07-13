@@ -1,12 +1,12 @@
 import { HttpException, Injectable, InternalServerErrorException, OnModuleInit } from "@nestjs/common";
-import { BaseTask } from "@tasks/baseTask";
+import { TaskConfigurer } from "@tasks/taskConfigurer";
 import { RandomProvider } from "../random-provider/random-provider.service";
 import { TaskLoaderService } from "./tasks.loader";
 import { ModuleRef } from "@nestjs/core";
 
 @Injectable()
 export class TasksManager implements OnModuleInit {
-  private readonly registry = new Map<string, BaseTask>();
+  private readonly registry = new Map<string, TaskConfigurer>();
 
   constructor(
     private readonly moduleRef: ModuleRef,
@@ -67,7 +67,7 @@ export class TasksManager implements OnModuleInit {
    * @throws HttpException 404 если задача не найдена
    * @throws InternalServerErrorException если задача с выбранным ключом отсутствует в реестре
    */
-  getTask(exam: string, subject: string, key: string, random: RandomProvider): BaseTask {
+  getTask(exam: string, subject: string, key: string, random: RandomProvider): TaskConfigurer {
     const compositeKey = this.buildKey(exam, subject, key);
 
     const exactTask = this.registry.get(compositeKey);
