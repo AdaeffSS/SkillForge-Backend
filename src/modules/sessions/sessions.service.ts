@@ -53,11 +53,11 @@ export class SessionsService {
   }
 
   /**
-   * Проверяет, что событие создания сессии еще не зарегистрировано.
+   * Проверяет, что событие создания сессии еще не зарегистрировано
    * @param event - DTO события регистрации.
    * @throws ConflictException если событие создания уже существует.
    */
-  private async createEventIfNotExists(event: RegisterEventDto): Promise<void> {
+  private async assertEventNotExists(event: RegisterEventDto): Promise<void> {
     const exists = await SessionEvent.findOne({
       where: { sessionId: event.sessionId, type: event.type },
     });
@@ -138,7 +138,7 @@ export class SessionsService {
     this.assertUserOwnsSession(session, req.user.sub);
 
     if (event.type === EventType.CREATE) {
-      await this.createEventIfNotExists(event);
+      await this.assertEventNotExists(event);
     }
 
     if (event.type === EventType.START) {
@@ -182,7 +182,7 @@ export class SessionsService {
       );
       if (invalid) {
         throw new BadRequestException({
-          message: `This session is configured to use only task type "${taskTypeFromTrainSession}"`,
+          message: `This session is configured to use only task type: ${taskTypeFromTrainSession}`,
           error: "InvalidTaskType",
         });
       }
